@@ -1,0 +1,291 @@
+/* =====================================================
+   MAHASISWA.CSS
+   Semua styling khusus halaman mahasiswa
+   ===================================================== */
+
+/* =====================================================
+   BAGIAN 1: HERO & PROFIL MAHASISWA
+   ===================================================== */
+
+/* ---------- Hero Mahasiswa ---------- */
+.student-hero {
+  background: linear-gradient(135deg, #0d3c8f 0%, #0b57d0 55%, #1668e3 100%);
+  border-radius: 20px;
+  padding: 32px 36px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(11, 87, 208, .22);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.student-hero::before {
+  content: ""; position: absolute; right: -60px; top: -60px;
+  width: 260px; height: 260px; border-radius: 50%;
+  background: rgba(255,255,255,.06);
+}
+.student-hero::after {
+  content: ""; position: absolute; right: 40px; bottom: -80px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(255,255,255,.05);
+}
+.student-avatar {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 42px; font-weight: 800; color: #fff;
+  border: 3px solid rgba(255,255,255,.3);
+  flex-shrink: 0;
+  position: relative; z-index: 1;
+  overflow: hidden;
+}
+.student-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.student-info { position: relative; z-index: 1; flex: 1; }
+.student-info .eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.14);
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; backdrop-filter: blur(4px);
+  margin-bottom: 10px;
+}
+.student-info h2 { font-size: 26px; font-weight: 800; margin: 0 0 6px; }
+.student-info p { margin: 0; opacity: .92; font-size: 14px; }
+.student-info .nim-badge {
+  display: inline-block; margin-top: 8px;
+  padding: 4px 12px; border-radius: 999px;
+  background: rgba(255,255,255,.18); font-size: 12.5px; font-weight: 600;
+}
+.student-info .info-chips {
+  display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.student-info .chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.14); font-size: 12px; font-weight: 600;
+}
+
+/* ---------- Iframe wrapper ---------- */
+.iframe-wrapper {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(17,24,39,.04);
+}
+.iframe-wrapper iframe {
+  width: 100%;
+  border: none;
+  min-height: 600px;
+  display: block;
+  background: #fff;
+}
+
+/* ---------- Profile card mahasiswa ---------- */
+.student-profile-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(17,24,39,.04);
+  display: flex;
+  gap: 32px;
+}
+.student-profile-card .profile-avatar-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.student-profile-card .profile-avatar {
+  width: 160px; height: 160px; border-radius: 50%;
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 64px; font-weight: 800; color: var(--primary);
+  border: 4px solid #fff;
+  box-shadow: 0 8px 24px rgba(11, 87, 208, .15);
+  overflow: hidden;
+}
+.student-profile-card .profile-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.student-profile-card .profile-detail { flex: 1; }
+.student-profile-card .profile-detail h3 {
+  font-size: 24px; font-weight: 800; color: var(--navy); margin: 0 0 4px;
+}
+.student-profile-card .profile-detail .role-chip {
+  display: inline-block; padding: 4px 12px; border-radius: 999px;
+  background: #d1fae5; color: #047857;
+  font-size: 12px; font-weight: 700; margin-bottom: 20px;
+}
+.student-profile-card .profile-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px 32px;
+}
+.student-profile-card .profile-grid .field-label {
+  font-size: 11.5px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;
+}
+.student-profile-card .profile-grid .field-value {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.student-profile-card .profile-grid .field-value i {
+  color: var(--primary); font-size: 14px;
+}
+
+/* =====================================================
+   BAGIAN 2: FORM KRS, JADWAL, INFO GRID
+   ===================================================== */
+
+/* ---------- Form Isi KRS ---------- */
+.krs-selected-box {
+  margin-top: 20px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--hover-soft);
+}
+.krs-selected-box h6 {
+  font-size: 14px; font-weight: 700; color: var(--navy);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.krs-total-sks {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.krs-total-sks .value {
+  font-size: 22px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+/* Checkbox tabel */
+.table-app input[type="checkbox"] {
+  width: 18px; height: 18px; cursor: pointer;
+  accent-color: var(--primary);
+}
+
+/* Info mahasiswa row (untuk tampilan tabel) */
+.info-row-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.info-row-table td {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+.info-row-table td.label {
+  background: var(--hover-soft);
+  font-weight: 600;
+  color: var(--navy);
+  width: 25%;
+}
+
+/* Info mahasiswa grid (untuk detail KRS, dll) */
+.mhs-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.mhs-info-item {
+  background: var(--hover-soft);
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+}
+.mhs-info-item .label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 4px;
+}
+.mhs-info-item .value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Jadwal grid (card per hari) */
+.jadwal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.jadwal-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(17,24,39,.04);
+  transition: transform .15s, box-shadow .15s;
+}
+.jadwal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(17,24,39,.08);
+  border-color: var(--primary);
+}
+.jadwal-card .day-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  margin-bottom: 10px;
+}
+.jadwal-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+.jadwal-card .meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+.jadwal-card .meta i {
+  width: 16px;
+  color: var(--primary);
+}
+
+/* =====================================================
+   BAGIAN 3: RESPONSIVE (semua media queries di bawah)
+   ===================================================== */
+
+/* Tablet & layar kecil */
+@media (max-width: 900px) {
+  .student-hero { flex-direction: column; text-align: center; }
+  .student-info .info-chips { justify-content: center; }
+  .student-profile-card {
+    flex-direction: column; align-items: center; text-align: center;
+  }
+  .student-profile-card .profile-grid { grid-template-columns: 1fr; }
+  .student-profile-card .profile-grid .field-value { justify-content: center; }
+}
+
+/* Mobile kecil */
+@media (max-width: 640px) {
+  .mhs-info-grid { grid-template-columns: 1fr; }
+  .jadwal-grid { grid-template-columns: 1fr; }
+}
