@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include "koneksi.php";
 
 // Jika sudah login, langsung arahkan sesuai role
