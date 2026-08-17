@@ -223,12 +223,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <div class="login-note"><span>atau</span></div>
-        <button class="guest-btn" type="button" onclick="alert('Fitur Login sebagai Guest belum diaktifkan.')">
+        <a class="guest-btn" href="guest.php">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <circle cx="12" cy="7.5" r="4"/><path d="M12 13.5c-4.8 0-8.5 2.6-8.5 6.2V21h17v-1.3c0-3.6-3.7-6.2-8.5-6.2Z"/>
           </svg>
           Login sebagai Guest
-        </button>
+        </a>
       </div>
     </section>
   </main>

@@ -75,7 +75,7 @@ include '../includes/topbar.php';
               <a href="userEdit.php?id_user=<?= urlencode($u['id_user']) ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="userDelete.php?id_user=<?= urlencode($u['id_user']) ?>" class="btn-app btn-sm-app danger"
+              <a href="userdelete.php?id_user=<?= urlencode($u['id_user']) ?>" class="btn-app btn-sm-app danger"
                  onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
                 <i class="fas fa-trash-alt"></i> Hapus
               </a>

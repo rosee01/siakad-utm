@@ -10,10 +10,11 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'mahasiswa') {
 $nim = $_SESSION['nim'] ?? '';
 if (empty($nim)) die("NIM tidak ditemukan.");
 
-$query = "SELECT k.id_krs, k.nim, k.semester, k.tahun_ajaran, d.nama_dosen, c.nama_kelas
+$query = "SELECT k.id_krs, k.nim, k.semester, k.tahun_ajaran, d.nama_dosen, j.kelas AS nama_kelas,
+                 (SELECT COUNT(*) FROM tblkrsdetail kd WHERE kd.id_krs = k.id_krs) AS jumlah_mk
           FROM tblkrs k
           LEFT JOIN tbldosen d ON k.nidn = d.nidn
-          LEFT JOIN tbl_kelas c ON k.id_jadwal = c.kode_kelas
+          LEFT JOIN tbljadwalkuliah j ON k.id_jadwal = j.id_jadwal
           WHERE k.nim = ?
           ORDER BY k.tahun_ajaran DESC, k.semester DESC";
 $stmt = mysqli_prepare($koneksi, $query);
@@ -56,13 +57,14 @@ include '../includes/topbar.php';
           <th>Tahun Akademik</th>
           <th>Dosen Wali</th>
           <th>Kelas</th>
+          <th>Mata Kuliah</th>
           <th style="width:160px">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php if (mysqli_num_rows($result) === 0): ?>
           <tr>
-            <td colspan="7" style="text-align:center; padding:32px; color:var(--muted);">
+            <td colspan="8" style="text-align:center; padding:32px; color:var(--muted);">
               <i class="fas fa-folder-open" style="font-size:32px; color:var(--muted); opacity:.3; display:block; margin-bottom:10px;"></i>
               Belum ada KRS. Silakan isi KRS baru.
             </td>
@@ -76,6 +78,7 @@ include '../includes/topbar.php';
             <td><?= htmlspecialchars($data['tahun_ajaran']); ?></td>
             <td><?= htmlspecialchars($data['nama_dosen'] ?? '-'); ?></td>
             <td><?= htmlspecialchars($data['nama_kelas'] ?? '-'); ?></td>
+            <td><span class="badge-app green"><?= (int)$data['jumlah_mk']; ?> mata kuliah</span></td>
             <td>
               <a href="krsdetail.php?nim=<?= urlencode($data['nim']); ?>&semester=<?= urlencode($data['semester']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-eye"></i> Detail

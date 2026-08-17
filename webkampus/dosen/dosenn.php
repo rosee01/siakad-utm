@@ -51,7 +51,7 @@ include '../includes/topbar.php';
 <div class="data-card" style="max-width:860px;">
   <div class="card-head">
     <h3><i class="fas fa-user-circle me-2" style="color:var(--primary)"></i>Informasi Pribadi</h3>
-    <a href="dosenEdit.php" class="btn-app">
+    <a href="dosenedit.php" class="btn-app">
       <i class="fas fa-edit"></i> Edit Profil
     </a>
   </div>

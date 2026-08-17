@@ -86,23 +86,13 @@ include '../includes/topbar.php';
   </a>
 </div>
 
-<!-- Tab Section -->
+<!-- Profil Lengkap -->
 <div class="data-card">
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="profil">
-      <i class="fas fa-user"></i> Profil Lengkap
-    </button>
-    <button class="tab-btn" data-tab="jadwal">
-      <i class="fas fa-calendar-alt"></i> Jadwal Kuliah
-    </button>
-    <button class="tab-btn" data-tab="krs">
-      <i class="fas fa-file-signature"></i> KRS
-    </button>
+  <div class="card-head">
+    <h3><i class="fas fa-user me-2" style="color:var(--primary)"></i>Profil Lengkap</h3>
   </div>
 
-  <!-- Tab Profil -->
-  <div id="tab-profil" class="tab-panel active">
-    <div class="student-profile-card">
+  <div class="student-profile-card">
       <div class="profile-avatar-wrap">
         <div class="profile-avatar">
           <?php if ($foto): ?>
@@ -151,32 +141,6 @@ include '../includes/topbar.php';
       </div>
     </div>
   </div>
-
-  <!-- Tab Jadwal (iframe ke jadwal.php di folder yang sama) -->
-  <div id="tab-jadwal" class="tab-panel">
-    <div class="iframe-wrapper">
-      <iframe src="jadwal.php" title="Jadwal Kuliah"></iframe>
-    </div>
-  </div>
-
-  <!-- Tab KRS (iframe ke krs.php di folder yang sama) -->
-  <div id="tab-krs" class="tab-panel">
-    <div class="iframe-wrapper">
-      <iframe src="krs.php" title="Kartu Rencana Studi"></iframe>
-    </div>
-  </div>
 </div>
-
-<script>
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const tabId = this.dataset.tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById('tab-' + tabId).classList.add('active');
-    });
-  });
-</script>
 
 <?php include '../includes/footer.php'; ?>

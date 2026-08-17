@@ -20,7 +20,7 @@ include '../includes/topbar.php';
 <div class="data-card">
   <div class="card-head">
     <h3><i class="fas fa-file-signature me-2" style="color:var(--primary)"></i>Data KRS</h3>
-    <a href="krsadd.php" class="btn-app">
+    <a href="krsAdd.php" class="btn-app">
       <i class="fas fa-plus-circle"></i> Tambah KRS
     </a>
   </div>

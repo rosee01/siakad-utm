@@ -36,7 +36,7 @@ if (isset($_POST["simpan"])) {
 /* ---------- DATA DROPDOWN ---------- */
 $mk_list    = mysqli_query($koneksi, "SELECT * FROM tblmatkul ORDER BY nama_mk ASC");
 $dosen_list = mysqli_query($koneksi, "SELECT * FROM tbldosen ORDER BY nama_dosen ASC");
-$sem_list   = mysqli_query($koneksi, "SELECT DISTINCT semester FROM tblmhs2 ORDER BY semester ASC");
+$sem_list   = [1, 2, 3, 4, 5, 6, 7, 8]; // semester tetap 1-8, tidak tergantung data mahasiswa yang ada
 $kls_list   = mysqli_query($koneksi, "SELECT * FROM tbl_kelas ORDER BY nama_kelas ASC");
 
 $currentPage = 'jadwal';
@@ -124,9 +124,9 @@ include '../includes/topbar.php';
         <label class="form-label">Semester</label>
         <select name="semester" class="form-select" required>
           <option value="" disabled selected>-- Pilih Semester --</option>
-          <?php while ($s = mysqli_fetch_array($sem_list)): ?>
-            <option value="<?= htmlspecialchars($s['semester']) ?>"><?= htmlspecialchars($s['semester']) ?></option>
-          <?php endwhile; ?>
+          <?php foreach ($sem_list as $s): ?>
+            <option value="<?= $s ?>"><?= $s ?></option>
+          <?php endforeach; ?>
         </select>
       </div>
       <div class="col-md-4 mb-3">

@@ -44,8 +44,10 @@ if ($selected_jadwal) {
     }
     
     $sql = "SELECT m.nim, m.nama_mhs, m.prodi, n.nilai
-            FROM tblmhs2 m
-            LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = ?
+            FROM tblkrs k
+            JOIN tblmhs2 m ON k.nim = m.nim
+            LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = k.id_jadwal
+            WHERE k.id_jadwal = ?
             ORDER BY m.nama_mhs";
     $stmt = $koneksi->prepare($sql);
     $stmt->bind_param("s", $selected_jadwal);
@@ -82,8 +84,10 @@ if (isset($_POST['simpan_nilai']) && $selected_jadwal) {
     
     // Reload data mahasiswa
     $sql = "SELECT m.nim, m.nama_mhs, m.prodi, n.nilai
-            FROM tblmhs2 m
-            LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = ?
+            FROM tblkrs k
+            JOIN tblmhs2 m ON k.nim = m.nim
+            LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = k.id_jadwal
+            WHERE k.id_jadwal = ?
             ORDER BY m.nama_mhs";
     $stmt = $koneksi->prepare($sql);
     $stmt->bind_param("s", $selected_jadwal);

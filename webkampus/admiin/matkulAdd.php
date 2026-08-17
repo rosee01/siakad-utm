@@ -41,7 +41,7 @@ $prodi_list  = mysqli_query($koneksi, "SELECT * FROM tblprodi ORDER BY nama_prod
 $dosen_list  = mysqli_query($koneksi, "SELECT DISTINCT nama_dosen FROM tbldosen ORDER BY nama_dosen ASC");
 $hari_list   = mysqli_query($koneksi, "SELECT DISTINCT hari FROM tbljadwalkuliah ORDER BY hari ASC");
 $ruang_list  = mysqli_query($koneksi, "SELECT DISTINCT ruang FROM tbljadwalkuliah ORDER BY ruang ASC");
-$sem_list    = mysqli_query($koneksi, "SELECT DISTINCT semester FROM tblmhs2 ORDER BY semester ASC");
+$sem_list    = [1, 2, 3, 4, 5, 6, 7, 8]; // semester tetap 1-8, tidak tergantung data mahasiswa yang ada
 
 $currentPage = 'matkul';
 $page_title  = 'Tambah Mata Kuliah';
@@ -98,9 +98,9 @@ include '../includes/topbar.php';
         <label class="form-label">Semester</label>
         <select name="semester" class="form-select" required>
           <option value="" disabled selected>-- Pilih Semester --</option>
-          <?php while ($s = mysqli_fetch_array($sem_list)): ?>
-            <option value="<?= htmlspecialchars($s['semester']) ?>"><?= htmlspecialchars($s['semester']) ?></option>
-          <?php endwhile; ?>
+          <?php foreach ($sem_list as $s): ?>
+            <option value="<?= $s ?>"><?= $s ?></option>
+          <?php endforeach; ?>
         </select>
       </div>
       <div class="col-md-4 mb-3">

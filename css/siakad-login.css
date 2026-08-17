@@ -209,6 +209,7 @@ button { font-family: inherit; }
   background: transparent; border: 1px solid var(--primary); border-radius: 10px;
   color: var(--primary); font-size: 15px; font-weight: 700;
   cursor: pointer; transition: background .15s;
+  text-decoration: none;
 }
 .guest-btn svg { width: 18px; height: 18px; }
 .guest-btn:hover { background: rgba(11, 87, 208, .06); }

@@ -62,7 +62,7 @@ include '../includes/topbar.php';
               <a href="jadwalkuliahEdit.php?id_jadwal=<?= urlencode($data['id_jadwal']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="jadwalkuliahDelete.php?id_jadwal=<?= urlencode($data['id_jadwal']); ?>" class="btn-app btn-sm-app danger"
+              <a href="jadwalkuliahdelete.php?id_jadwal=<?= urlencode($data['id_jadwal']); ?>" class="btn-app btn-sm-app danger"
                  onclick="return confirm('Yakin ingin menghapus jadwal ini?')">
                 <i class="fas fa-trash-alt"></i> Hapus
               </a>

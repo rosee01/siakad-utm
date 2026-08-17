@@ -20,7 +20,7 @@ include '../includes/topbar.php';
 <div class="data-card">
   <div class="card-head">
     <h3><i class="fas fa-file-alt me-2" style="color:var(--primary)"></i>Data KRS Detail</h3>
-    <a href="KrsdetailAdd.php" class="btn-app">
+    <a href="krsdetailAdd.php" class="btn-app">
       <i class="fas fa-plus-circle"></i> Tambah KRS Detail
     </a>
   </div>
@@ -31,6 +31,7 @@ include '../includes/topbar.php';
         <tr>
           <th style="width:50px">No</th>
           <th>ID KRS Detail</th>
+          <th>ID KRS</th>
           <th>NIM</th>
           <th>Kode MK</th>
           <th style="width:170px">Aksi</th>
@@ -38,12 +39,13 @@ include '../includes/topbar.php';
       </thead>
       <tbody>
         <?php if (mysqli_num_rows($result) === 0): ?>
-          <tr><td colspan="5" style="text-align:center; padding:24px; color:var(--muted);">Tidak ada data KRS Detail.</td></tr>
+          <tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">Tidak ada data KRS Detail.</td></tr>
         <?php endif; ?>
         <?php $no = 1; while ($datakrs = mysqli_fetch_array($result)): ?>
           <tr>
             <td><?= $no++; ?></td>
             <td><strong><?= htmlspecialchars($datakrs['id_krsdetail']); ?></strong></td>
+            <td><?= htmlspecialchars($datakrs['id_krs'] ?? '-'); ?></td>
             <td><span class="badge-app green"><?= htmlspecialchars($datakrs['nim']); ?></span></td>
             <td><span class="badge-app"><?= htmlspecialchars($datakrs['kode_mk']); ?></span></td>
             <td>

@@ -31,10 +31,11 @@ $dataEdit = mysqli_fetch_array($resultEdit);
 // Proses update
 if (isset($_POST["ubah"])) {
     $id_krsdetail = mysqli_real_escape_string($koneksi, trim($_POST["id_krsdetail"]));
+    $id_krs       = mysqli_real_escape_string($koneksi, trim($_POST["id_krs"]));
     $nim          = mysqli_real_escape_string($koneksi, trim($_POST["nim"]));
     $kode_mk      = mysqli_real_escape_string($koneksi, trim($_POST["kode_mk"]));
 
-    $query = "UPDATE tblkrsdetail SET nim='$nim', kode_mk='$kode_mk' WHERE id_krsdetail='$id_krsdetail'";
+    $query = "UPDATE tblkrsdetail SET id_krs='$id_krs', nim='$nim', kode_mk='$kode_mk' WHERE id_krsdetail='$id_krsdetail'";
     $result = mysqli_query($koneksi, $query);
 
     if ($result) {
@@ -50,6 +51,7 @@ if (isset($_POST["ubah"])) {
 /* ---------- DATA DROPDOWN ---------- */
 $mk_list  = mysqli_query($koneksi, "SELECT * FROM tblmatkul ORDER BY kode_mk ASC");
 $mhs_list = mysqli_query($koneksi, "SELECT nim, nama_mhs FROM tblmhs2 ORDER BY nim ASC");
+$krs_list = mysqli_query($koneksi, "SELECT k.id_krs, k.nim, k.semester, k.tahun_ajaran FROM tblkrs k ORDER BY k.id_krs ASC");
 
 $currentPage = 'krsdetail';
 $page_title  = 'Edit KRS Detail';
@@ -104,6 +106,20 @@ include '../includes/topbar.php';
           <?php endwhile; ?>
         </select>
       </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">KRS (Mahasiswa — Semester — Tahun Ajaran)</label>
+      <select name="id_krs" class="form-select" required>
+        <option value="" disabled>-- Pilih KRS --</option>
+        <?php while ($k = mysqli_fetch_array($krs_list)): 
+          $selected = ($k['id_krs'] == $dataEdit['id_krs']) ? 'selected' : '';
+        ?>
+          <option value="<?= htmlspecialchars($k['id_krs']) ?>" <?= $selected ?>>
+            #<?= htmlspecialchars($k['id_krs']) ?> — <?= htmlspecialchars($k['nim']) ?> (Smt <?= htmlspecialchars($k['semester']) ?>, <?= htmlspecialchars($k['tahun_ajaran']) ?>)
+          </option>
+        <?php endwhile; ?>
+      </select>
     </div>
 
     <div class="mb-4">

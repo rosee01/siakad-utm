@@ -1,5 +1,6 @@
 <?php
 session_start();
+include "koneksi.php";
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
     exit;
@@ -10,6 +11,12 @@ $page_title  = 'Dashboard';
 include '../includes/header.php';
 include '../includes/sidebar.php';
 include '../includes/topbar.php';
+
+// Hitung data asli dari database biar stats akurat & otomatis
+$hit_mhs   = $koneksi->query("SELECT COUNT(*) AS j FROM tblmhs2")->fetch_assoc()['j'];
+$hit_dosen = $koneksi->query("SELECT COUNT(*) AS j FROM tbldosen")->fetch_assoc()['j'];
+$hit_mk    = $koneksi->query("SELECT COUNT(*) AS j FROM tblmatkul")->fetch_assoc()['j'];
+$hit_prodi = $koneksi->query("SELECT COUNT(*) AS j FROM tblprodi")->fetch_assoc()['j'];
 ?>
 
 <!-- Welcome hero -->
@@ -25,7 +32,7 @@ include '../includes/topbar.php';
     <div class="stat-icon blue"><i class="fas fa-user-graduate"></i></div>
     <div>
       <div class="stat-label">Total Mahasiswa</div>
-      <div class="stat-value">1.248</div>
+      <div class="stat-value"><?php echo $hit_mhs; ?></div>
       <div class="stat-delta"><i class="fas fa-arrow-up"></i> Aktif</div>
     </div>
   </div>
@@ -33,7 +40,7 @@ include '../includes/topbar.php';
     <div class="stat-icon indigo"><i class="fas fa-chalkboard-teacher"></i></div>
     <div>
       <div class="stat-label">Total Dosen</div>
-      <div class="stat-value">87</div>
+      <div class="stat-value"><?php echo $hit_dosen; ?></div>
       <div class="stat-delta"><i class="fas fa-arrow-up"></i> Aktif</div>
     </div>
   </div>
@@ -41,7 +48,7 @@ include '../includes/topbar.php';
     <div class="stat-icon green"><i class="fas fa-book-open"></i></div>
     <div>
       <div class="stat-label">Matakuliah</div>
-      <div class="stat-value">156</div>
+      <div class="stat-value"><?php echo $hit_mk; ?></div>
       <div class="stat-delta"><i class="fas fa-check"></i> Semester ini</div>
     </div>
   </div>
@@ -49,7 +56,7 @@ include '../includes/topbar.php';
     <div class="stat-icon amber"><i class="fas fa-book"></i></div>
     <div>
       <div class="stat-label">Program Studi</div>
-      <div class="stat-value">12</div>
+      <div class="stat-value"><?php echo $hit_prodi; ?></div>
       <div class="stat-delta"><i class="fas fa-check"></i> Terakreditasi</div>
     </div>
   </div>

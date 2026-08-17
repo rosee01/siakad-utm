@@ -17,10 +17,30 @@ $stmt->execute();
 $mhs = $stmt->get_result()->fetch_assoc();
 if (!$mhs) die("Data mahasiswa tidak ditemukan.");
 
-// Semua matakuliah
-$result_mk = $koneksi->query("SELECT kode_mk, nama_mk, sks FROM tblmatkul ORDER BY nama_mk");
+// KRS terbaru mahasiswa (jadi patokan semester yang ditampilkan di KHS)
+$krs_terbaru = null;
+$stmt_krs = $koneksi->prepare("SELECT id_krs, tahun_ajaran, nidn
+                                FROM tblkrs
+                                WHERE nim = ?
+                                ORDER BY tahun_ajaran DESC, semester DESC
+                                LIMIT 1");
+$stmt_krs->bind_param("s", $nim);
+$stmt_krs->execute();
+$krs_terbaru = $stmt_krs->get_result()->fetch_assoc();
+
+// Mata kuliah yang benar-benar diambil mahasiswa ini — hanya dari KRS terbaru
 $matakuliah = [];
-while ($row = $result_mk->fetch_assoc()) $matakuliah[] = $row;
+if ($krs_terbaru) {
+    $stmt_mk = $koneksi->prepare("SELECT DISTINCT mk.kode_mk, mk.nama_mk, mk.sks
+                                   FROM tblkrsdetail kd
+                                   JOIN tblmatkul mk ON kd.kode_mk = mk.kode_mk
+                                   WHERE kd.id_krs = ?
+                                   ORDER BY mk.nama_mk");
+    $stmt_mk->bind_param("i", $krs_terbaru['id_krs']);
+    $stmt_mk->execute();
+    $result_mk = $stmt_mk->get_result();
+    while ($row = $result_mk->fetch_assoc()) $matakuliah[] = $row;
+}
 
 // Nilai mahasiswa
 $stmt2 = $koneksi->prepare("SELECT n.nilai, m.kode_mk
@@ -33,6 +53,16 @@ $stmt2->execute();
 $result_nilai = $stmt2->get_result();
 $nilai_map = [];
 while ($row = $result_nilai->fetch_assoc()) $nilai_map[$row['kode_mk']] = $row['nilai'];
+
+// Dosen wali (dari KRS terbaru mahasiswa)
+$dosen_wali = '-';
+if ($krs_terbaru && $krs_terbaru['nidn']) {
+    $stmt3 = $koneksi->prepare("SELECT nama_dosen FROM tbldosen WHERE nidn = ?");
+    $stmt3->bind_param("s", $krs_terbaru['nidn']);
+    $stmt3->execute();
+    $row_wali = $stmt3->get_result()->fetch_assoc();
+    if ($row_wali) $dosen_wali = $row_wali['nama_dosen'];
+}
 
 function konversiHuruf($nilai) {
     if ($nilai >= 85) return ['A', 4.00];
@@ -142,14 +172,14 @@ include '../includes/topbar.php';
   <table class="info-table">
     <tr>
       <td style="width:15%">NIM</td><td style="width:35%">: <?= htmlspecialchars($mhs['nim']) ?></td>
-      <td style="width:15%">TA - SMT</td><td>: 2025/2026 - <?= htmlspecialchars($mhs['semester']) ?></td>
+      <td style="width:15%">TA - SMT</td><td>: <?= htmlspecialchars($krs_terbaru['tahun_ajaran'] ?? '-') ?> - <?= htmlspecialchars($mhs['semester']) ?></td>
     </tr>
     <tr>
       <td>NAMA</td><td>: <?= htmlspecialchars($mhs['nama_mhs']) ?></td>
       <td>Fakultas</td><td>: TEKNIK INFORMATIKA</td>
     </tr>
     <tr>
-      <td>Dosen Wali/PA</td><td>: Dr. Dwinita Arwidiyarti, S.Kom., M.Kom</td>
+      <td>Dosen Wali/PA</td><td>: <?= htmlspecialchars($dosen_wali) ?></td>
       <td>Program Studi</td><td>: <?= htmlspecialchars($mhs['prodi']) ?></td>
     </tr>
     <tr>

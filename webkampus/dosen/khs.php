@@ -31,12 +31,21 @@ if ($nim) {
     $mhs = $stmt->get_result()->fetch_assoc();
 }
 
-// Ambil semua matakuliah
-$sql_mk = "SELECT kode_mk, nama_mk, sks FROM tblmatkul ORDER BY nama_mk";
-$result_mk = $koneksi->query($sql_mk);
+// Mata kuliah yang benar-benar diambil mahasiswa terpilih (dari KRS)
 $matakuliah = [];
-while ($row = $result_mk->fetch_assoc()) {
-    $matakuliah[] = $row;
+if ($nim) {
+    $sql_mk = "SELECT DISTINCT mk.kode_mk, mk.nama_mk, mk.sks
+               FROM tblkrsdetail kd
+               JOIN tblmatkul mk ON kd.kode_mk = mk.kode_mk
+               WHERE kd.nim = ?
+               ORDER BY mk.nama_mk";
+    $stmt_mk = $koneksi->prepare($sql_mk);
+    $stmt_mk->bind_param("s", $nim);
+    $stmt_mk->execute();
+    $result_mk = $stmt_mk->get_result();
+    while ($row = $result_mk->fetch_assoc()) {
+        $matakuliah[] = $row;
+    }
 }
 
 // Ambil nilai mahasiswa
@@ -54,6 +63,21 @@ if ($nim) {
     while ($row = $result_nilai->fetch_assoc()) {
         $nilai_map[$row['kode_mk']] = $row['nilai'];
     }
+}
+
+// Dosen wali (ambil dari KRS terbaru mahasiswa, bukan teks tetap)
+$dosen_wali = '-';
+if ($nim) {
+    $stmt3 = $koneksi->prepare("SELECT d.nama_dosen
+                                 FROM tblkrs k
+                                 JOIN tbldosen d ON k.nidn = d.nidn
+                                 WHERE k.nim = ?
+                                 ORDER BY k.tahun_ajaran DESC, k.semester DESC
+                                 LIMIT 1");
+    $stmt3->bind_param("s", $nim);
+    $stmt3->execute();
+    $row_wali = $stmt3->get_result()->fetch_assoc();
+    if ($row_wali) $dosen_wali = $row_wali['nama_dosen'];
 }
 
 function konversiHuruf($nilai) {
@@ -236,7 +260,7 @@ include '../includes/topbar.php';
         <td class="label">Fakultas</td><td>: TEKNIK INFORMATIKA</td>
       </tr>
       <tr>
-        <td class="label">Dosen Wali/PA</td><td class="value">: Dr. Dwinita Arwidiyarti, S.Kom., M.Kom</td>
+        <td class="label">Dosen Wali/PA</td><td class="value">: <?= htmlspecialchars($dosen_wali) ?></td>
         <td class="label">Program Studi</td><td>: <?= htmlspecialchars($mhs['prodi']) ?></td>
       </tr>
       <tr>

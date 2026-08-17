@@ -18,11 +18,11 @@ if ($nim !== $nim_session) {
 }
 
 // Data header KRS
-$query_krs = "SELECT k.nim, m.nama_mhs, m.prodi, k.semester, k.tahun_ajaran, d.nama_dosen, d.nidn, c.nama_kelas
+$query_krs = "SELECT k.id_krs, k.nim, m.nama_mhs, m.prodi, k.semester, k.tahun_ajaran, d.nama_dosen, d.nidn, j.kelas AS nama_kelas, j.matakuliah, j.dosen AS dosen_pengajar
               FROM tblkrs k
               LEFT JOIN tblmhs2 m ON k.nim = m.nim
               LEFT JOIN tbldosen d ON k.nidn = d.nidn
-              LEFT JOIN tbl_kelas c ON k.id_jadwal = c.kode_kelas
+              LEFT JOIN tbljadwalkuliah j ON k.id_jadwal = j.id_jadwal
               WHERE k.nim = ?" . ($semester_filter ? " AND k.semester = ?" : "");
 $stmt = mysqli_prepare($koneksi, $query_krs);
 if ($semester_filter) {
@@ -35,13 +35,14 @@ $data = mysqli_stmt_get_result($stmt)->fetch_assoc();
 
 if (!$data) die("Data KRS tidak ditemukan.");
 
-// Daftar mata kuliah (INNER JOIN agar data kotor tidak tampil)
+// Daftar mata kuliah — hanya yang terhubung ke id_krs INI (bukan semua
+// mata kuliah yang pernah diambil mahasiswa di semester lain)
 $query_matkul = "SELECT mk.kode_mk, mk.nama_mk, mk.semester, mk.sks
                  FROM tblkrsdetail kd
                  INNER JOIN tblmatkul mk ON kd.kode_mk = mk.kode_mk
-                 WHERE kd.nim = ?";
+                 WHERE kd.id_krs = ?";
 $stmt2 = mysqli_prepare($koneksi, $query_matkul);
-mysqli_stmt_bind_param($stmt2, 's', $nim);
+mysqli_stmt_bind_param($stmt2, 'i', $data['id_krs']);
 mysqli_stmt_execute($stmt2);
 $result_matkul = mysqli_stmt_get_result($stmt2);
 

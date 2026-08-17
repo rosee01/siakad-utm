@@ -19,7 +19,7 @@ include '../includes/topbar.php';
 <div class="data-card">
   <div class="card-head">
     <h3><i class="fas fa-book me-2" style="color:var(--primary)"></i>Data Program Studi</h3>
-    <a href="prodiAdd.php" class="btn-app">
+    <a href="prodiadd.php" class="btn-app">
       <i class="fas fa-plus-circle"></i> Tambah Prodi
     </a>
   </div>

@@ -1,17 +1,30 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../login.php");
+    exit;
+}
 include "koneksi.php";
 
 $pesan = "";
 
 if (isset($_GET['id_krs'])) {
-    $id_krs = mysqli_real_escape_string($koneksi, $_GET['id_krs']);
-    $query = "DELETE FROM tblkrs WHERE id_krs = '$id_krs'";
-    $result = mysqli_query($koneksi, $query);
+    $id_krs = $_GET['id_krs'];
+
+    // Hapus dulu detail mata kuliahnya (tblkrsdetail) supaya tidak jadi data
+    // yatim (yang nunjuk ke id_krs yang sudah tidak ada).
+    $stmt_detail = $koneksi->prepare("DELETE FROM tblkrsdetail WHERE id_krs = ?");
+    $stmt_detail->bind_param("i", $id_krs);
+    $stmt_detail->execute();
+
+    $stmt = $koneksi->prepare("DELETE FROM tblkrs WHERE id_krs = ?");
+    $stmt->bind_param("i", $id_krs);
+    $result = $stmt->execute();
 
     if ($result) {
-        $pesan = "<div style='color:green;'>Data KRS dengan ID <strong>$id_krs</strong> berhasil dihapus.</div>";
+        $pesan = "<div style='color:green;'>Data KRS dengan ID <strong>" . htmlspecialchars($id_krs) . "</strong> beserta detail mata kuliahnya berhasil dihapus.</div>";
     } else {
-        $pesan = "<div style='color:red;'>Data gagal dihapus: " . mysqli_error($koneksi) . "</div>";
+        $pesan = "<div style='color:red;'>Data gagal dihapus: " . htmlspecialchars($koneksi->error) . "</div>";
     }
 } else {
     $pesan = "<div style='color:red;'>ID KRS tidak ditemukan di URL.</div>";
