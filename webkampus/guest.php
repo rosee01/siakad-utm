@@ -178,7 +178,7 @@ $dosenResult = mysqli_query($koneksi, "SELECT nidn, nama_dosen, email FROM tbldo
   </div>
 
   <footer class="site-footer" style="text-align:center; padding:20px; color:var(--muted); font-size:13px;">
-    © <?= date('Y') ?> Universitas Teknologi Mataram. All rights reserved.
+    © <?= date('Y') ?> SIAKAD. Proyek demonstrasi independen, bukan layanan resmi universitas.
   </footer>
 
   <script>

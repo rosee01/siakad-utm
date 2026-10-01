@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
   </main>
 
-  <footer class="site-footer">© <?= date('Y') ?> Universitas Teknologi Mataram. All rights reserved.</footer>
+  <footer class="site-footer">© <?= date('Y') ?> SIAKAD. Proyek demonstrasi independen, bukan layanan resmi universitas.</footer>
 
   <script src="../js/siakad-login.js"></script>
 </body>
