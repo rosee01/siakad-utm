@@ -23,7 +23,7 @@ $hit_prodi = $koneksi->query("SELECT COUNT(*) AS j FROM tblprodi")->fetch_assoc(
 <div class="welcome-hero">
   <div class="eyebrow"><i class="fas fa-star"></i> Academic Management System</div>
   <h2>Selamat Datang, Administrator 👋</h2>
-  <p>Kelola seluruh data akademik Universitas Teknologi Mataram melalui dashboard terintegrasi ini. Pilih menu di samping kiri untuk mengelola data mahasiswa, dosen, matakuliah, jadwal, KRS, KHS, dan user sistem.</p>
+  <p>Kelola data akademik contoh melalui dashboard demo ini. Pilih menu di samping kiri untuk mengelola data mahasiswa, dosen, mata kuliah, jadwal, KRS, KHS, dan pengguna sistem.</p>
 </div>
 
 <!-- Stats Grid -->
@@ -91,7 +91,7 @@ $hit_prodi = $koneksi->query("SELECT COUNT(*) AS j FROM tblprodi")->fetch_assoc(
 
   <div class="info-note">
     <i class="fas fa-university"></i>
-    Sistem ini dirancang untuk mendukung kelancaran proses administrasi akademik di lingkungan Universitas Teknologi Mataram.
+    Sistem ini merupakan simulasi pengelolaan data akademik untuk keperluan demonstrasi portofolio.
   </div>
 </div>
 

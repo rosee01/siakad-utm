@@ -1,17 +1,21 @@
 # 🎓 SIAKAD — Sistem Informasi Akademik
 
-A web-based Academic Information System for universities, built with **native PHP + MySQL**.
+A portfolio demonstration of an Academic Information System, built with **native PHP + MySQL**.
 Manages students, lecturers, study programs, courses, schedules, KRS/KHS, grades,
 and role-based portals for **Admin**, **Lecturer**, and **Student** — including
-print-ready official academic documents (KHS & KRS).
+printable sample academic documents (KHS & KRS).
+
+This is an independent demo project. It is not affiliated with or an official
+service of any university. All sample records and printed documents are for
+demonstration only.
 
 ---
 
 ## 📸 Screenshots
 
-Screenshots will be added after all visible personal and academic records have been replaced with fabricated, anonymized examples.
+Screenshots will be added after all visible personal and academic records have been replaced with fabricated demo examples.
 
-The login page uses an AI-generated campus illustration, not a documentary photograph of the university.
+The login page uses a generic education illustration and does not depict a real campus.
 
 ---
 
@@ -32,14 +36,14 @@ The login page uses an AI-generated campus illustration, not a documentary photo
 ### 👨🏫 Lecturer (Dosen)
 - Profile & teaching schedule
 - Grade entry with **live grade-letter preview**
-- Print student KHS as an official 1-page A4 document
+- Print a sample 1-page A4 KHS document
 
 ### 👩‍🎓 Student (Mahasiswa)
 - Profile, KRS planning (with live total-credit counter), KRS detail
-- Print-ready official KRS document
+- Printable sample KRS document
 
 ### 🖨 Document Printing
-- KHS & KRS render as official university documents (letterhead, signature block)
+- KHS & KRS render as clearly labeled demo documents (letterhead, signature block)
 - Print CSS guarantees **exactly 1 A4 page**
 
 ---
@@ -56,10 +60,10 @@ The login page uses an AI-generated campus illustration, not a documentary photo
 ## 📦 Installation
 
 1. Install [XAMPP](https://www.apachefriends.org/) and start Apache + MySQL.
-2. Copy this project into `htdocs/portofolio/siakad-portofolio1/`.
+2. Copy this project into `htdocs/portofolio/siakad-demo/`.
 3. Create a local database named `db_kampus` and prepare its schema and synthetic demo records locally.
 4. Configure local database credentials in `webkampus/koneksi.php`.
-5. Open: `http://localhost/portofolio/siakad-portofolio1/webkampus/login.php`
+5. Open: `http://localhost/portofolio/siakad-demo/webkampus/login.php`
 
 > A database dump is intentionally not included in this repository because it contained student-like personal and academic records. The application will not run until you create a local database using fabricated test data. Never use production personal data in a public repository.
 
@@ -128,4 +132,4 @@ css/
 
 ---
 
-**Developed by Rosee** — Universitas Teknologi Mataram
+**Developed by Rosee** — Independent portfolio demonstration

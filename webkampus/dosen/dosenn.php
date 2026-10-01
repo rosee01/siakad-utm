@@ -43,7 +43,7 @@ include '../includes/topbar.php';
   <div class="lecturer-info">
     <div class="eyebrow"><i class="fas fa-user"></i> Profil Dosen</div>
     <h2><?= htmlspecialchars($row['nama_dosen']) ?></h2>
-    <p><?= htmlspecialchars($row['prodi'] ?? 'Dosen Universitas Teknologi Mataram') ?></p>
+    <p><?= htmlspecialchars($row['prodi'] ?? 'Dosen • SIAKAD Demo') ?></p>
     <span class="nidn-badge"><i class="fas fa-id-card"></i> NIDN: <?= htmlspecialchars($row['nidn']) ?></span>
   </div>
 </div>

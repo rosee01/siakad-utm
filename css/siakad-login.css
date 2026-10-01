@@ -31,8 +31,7 @@ button { font-family: inherit; }
 }
 
 /* ================= HERO (KIRI) ================= */
-/* Gradasi bawah (#7eb2e8) disamakan dengan warna langit di foto
-   sehingga titik pertemuan foto & background tidak terlihat */
+/* The hero gradient supports the generic education illustration below. */
 .hero {
   position: relative;
   overflow: hidden;
@@ -72,9 +71,8 @@ button { font-family: inherit; }
 
 .hero-description { margin-top: 16px; max-width: 520px; font-size: 15px; line-height: 1.65; color: #3d4a5c; }
 
-/* Foto gedung: tepi atasnya DI-FADE (mask) supaya tidak ada garis keras.
-   filter membuat tone foto sedikit lebih lembut agar serasi dengan background */
-.campus-photo {
+/* Fade the generic illustration into the hero background. */
+.learning-illustration {
   position: absolute;
   left: 0; right: 0; bottom: 0;
   width: 100%;
@@ -86,8 +84,8 @@ button { font-family: inherit; }
           mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.45) 4%, #000 10%);
 }
 
-/* Kabut tipis tambahan: memperhalus peralihan awan di area pertemuan */
-.photo-fade {
+/* Soften the transition between the illustration and hero content. */
+.illustration-fade {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -232,7 +230,17 @@ button { font-family: inherit; }
 }
 @media (max-width: 640px) {
   .hero { padding: 28px 24px 0; }
-  .features { left: 24px; right: 24px; grid-template-columns: 1fr; }
+  .features {
+    left: 24px; right: 24px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px; padding: 14px 12px;
+  }
+  .feature { display: block; text-align: center; }
+  .feature-icon { width: 34px; height: 34px; margin: 0 auto 7px; }
+  .feature-icon svg { width: 18px; height: 18px; }
+  .feature strong { font-size: 11px; }
+  .feature span { font-size: 10px; }
+  .learning-illustration { bottom: 90px; }
   .hero-content h1 { font-size: 34px; }
   .login-card { padding: 32px 22px; }
 }

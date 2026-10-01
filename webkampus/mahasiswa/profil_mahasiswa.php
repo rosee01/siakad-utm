@@ -52,7 +52,7 @@ include '../includes/topbar.php';
   <div class="student-info">
     <div class="eyebrow"><i class="fas fa-user-graduate"></i> Portal Mahasiswa</div>
     <h2>Halo, <?= htmlspecialchars($mahasiswa['nama_mhs']) ?> 👋</h2>
-    <p>Selamat datang di Sistem Informasi Akademik Universitas Teknologi Mataram.</p>
+    <p>Selamat datang di SIAKAD Demo, simulasi sistem informasi akademik untuk portofolio.</p>
     <div class="info-chips">
       <span class="nim-badge"><i class="fas fa-id-card"></i> NIM: <?= htmlspecialchars($mahasiswa['nim']) ?></span>
       <span class="chip"><i class="fas fa-book"></i> <?= htmlspecialchars($mahasiswa['prodi'] ?? '-') ?></span>

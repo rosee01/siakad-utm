@@ -127,8 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </p>
       </div>
 
-      <img class="campus-photo" src="../assets/img/utm.png?v=2" alt="Ilustrasi gedung kampus Universitas Teknologi Mataram, dibuat dengan AI">
-      <div class="photo-fade" aria-hidden="true"></div>
+      <img class="learning-illustration" src="../assets/img/learning-illustration.svg" alt="Ilustrasi buku dan topi wisuda untuk SIAKAD Demo">
+      <div class="illustration-fade" aria-hidden="true"></div>
 
       <div class="features">
         <div class="feature">
@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
   </main>
 
-  <footer class="site-footer">© <?= date('Y') ?> SIAKAD. Proyek demonstrasi independen, bukan layanan resmi universitas.</footer>
+  <footer class="site-footer">© <?= date('Y') ?> SIAKAD Demo. Proyek portofolio independen, bukan sistem akademik resmi.</footer>
 
   <script src="../js/siakad-login.js"></script>
 </body>

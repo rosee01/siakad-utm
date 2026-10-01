@@ -161,8 +161,8 @@ include '../includes/topbar.php';
   <div class="khs-kop">
     <div class="kop-logo"><i class="fas fa-graduation-cap"></i></div>
     <div class="kop-text">
-      <div class="kop-title">UNIVERSITAS TEKNOLOGI MATARAM</div>
-      <div class="kop-sub">Jalan Raya Panca Usaha No. 88, Mataram, NTB<br>Telp. (0370) 123456, Email: info@utm.ac.id</div>
+      <div class="kop-title">SIAKAD DEMO AKADEMIK</div>
+      <div class="kop-sub">Dokumen simulasi portofolio — bukan dokumen akademik resmi</div>
     </div>
     <div style="width:62px;"></div>
   </div>
@@ -245,7 +245,7 @@ include '../includes/topbar.php';
         1 lembar untuk Program Studi &nbsp;&nbsp; 1 lembar untuk Dosen Wali/PA
       </td>
       <td style="text-align:center;">
-        Mataram, <?= date('d F Y') ?><br>
+        Tanggal: <?= date('d F Y') ?><br>
         Dekan,
         <div class="sig-space"></div>
         <strong><u>Nama Dekan</u></strong><br>
