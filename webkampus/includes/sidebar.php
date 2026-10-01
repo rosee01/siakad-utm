@@ -68,8 +68,11 @@ function isActive($page) {
   </nav>
 
   <div class="sidebar-footer">
-    <a href="../logout.php" class="logout-btn">
-      <i class="fas fa-sign-out-alt"></i><span>Keluar</span>
-    </a>
+    <form method="post" action="../logout.php">
+      <?= csrf_field() ?>
+      <button type="submit" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i><span>Keluar</span>
+      </button>
+    </form>
   </div>
 </aside>

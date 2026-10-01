@@ -13,8 +13,9 @@ if (isset($_POST["simpan"])) {
     $kode_prodi = mysqli_real_escape_string($koneksi, trim($_POST["kode_prodi"]));
     $nama_prodi = mysqli_real_escape_string($koneksi, trim($_POST["nama_prodi"]));
 
-    $query  = "INSERT INTO tblprodi (kode_prodi, nama_prodi) VALUES ('$kode_prodi', '$nama_prodi')";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = $koneksi->prepare("INSERT INTO tblprodi (kode_prodi, nama_prodi) VALUES (?, ?)");
+    $stmt->bind_param("ss", $kode_prodi, $nama_prodi);
+    $result = $stmt->execute();
 
     if ($result) {
         header("Location: prodi.php");
@@ -61,6 +62,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="mb-3">
       <label class="form-label">Kode Prodi</label>
       <input type="text" name="kode_prodi" class="form-control" required placeholder="Contoh: TI" />

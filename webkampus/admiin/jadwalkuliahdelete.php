@@ -6,19 +6,25 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 }
 include "koneksi.php";
 
-$id_jadwal = $_GET['id_jadwal'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Metode tidak diizinkan.');
+}
 
-if ($id_jadwal !== '') {
+$id_jadwal = $_POST['id_jadwal'] ?? '';
+if (is_scalar($id_jadwal) && ctype_digit((string) $id_jadwal) && (int) $id_jadwal > 0) {
     $stmt = $koneksi->prepare("DELETE FROM tbljadwalkuliah WHERE id_jadwal = ?");
+    $id_jadwal = (int) $id_jadwal;
     $stmt->bind_param("i", $id_jadwal);
     $resultdelete = $stmt->execute();
 } else {
     $resultdelete = false;
 }
 
-if ($resultdelete) {
-    echo "<script>alert('Data berhasil dihapus'); window.location.href='jadwalkuliah.php';</script>";
-} else {
-    echo "<script>alert('Data gagal dihapus'); window.location.href='jadwalkuliah.php';</script>";
-}
+$_SESSION['flash'] = [
+    'type' => $resultdelete ? 'success' : 'error',
+    'message' => $resultdelete ? 'Jadwal berhasil dihapus.' : 'Jadwal gagal dihapus.',
+];
+header("Location: jadwalkuliah.php", true, 303);
+exit;
 ?>

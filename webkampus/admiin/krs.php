@@ -56,10 +56,11 @@ include '../includes/topbar.php';
               <a href="krsEdit.php?id_krs=<?= urlencode($data['id_krs']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="krsdelete.php?id_krs=<?= urlencode($data['id_krs']); ?>" class="btn-app btn-sm-app danger"
-                 onclick="return confirm('Yakin hapus data KRS ini?')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </a>
+              <form method="post" action="krsdelete.php" style="display:inline;" onsubmit="return confirm('Yakin hapus data KRS ini?')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id_krs" value="<?= (int) $data['id_krs'] ?>">
+                <button type="submit" class="btn-app btn-sm-app danger"><i class="fas fa-trash-alt"></i> Hapus</button>
+              </form>
             </td>
           </tr>
         <?php endwhile; ?>

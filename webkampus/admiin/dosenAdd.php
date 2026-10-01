@@ -16,9 +16,11 @@ if (isset($_POST["simpan"])) {
     $jns_kelamin = mysqli_real_escape_string($koneksi, $_POST["jns_kelamin"]);
     $telpn       = mysqli_real_escape_string($koneksi, trim($_POST["telpn"]));
 
-    $query  = "INSERT INTO tbldosen (nidn, nama_dosen, email, jns_kelamin, telpn) 
-               VALUES ('$nidn', '$nama_dosen', '$email', '$jns_kelamin', '$telpn')";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = $koneksi->prepare(
+        "INSERT INTO tbldosen (nidn, nama_dosen, email, jns_kelamin, telpn) VALUES (?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param("sssss", $nidn, $nama_dosen, $email, $jns_kelamin, $telpn);
+    $result = $stmt->execute();
 
     if ($result) {
         header("Location: dosen.php");
@@ -57,6 +59,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="mb-3">
       <label class="form-label">Nomor Induk Dosen Nasional (NIDN)</label>
       <input type="text" id="nidn" name="nidn" class="form-control" required />

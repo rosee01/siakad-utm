@@ -86,6 +86,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">NIDN</label>

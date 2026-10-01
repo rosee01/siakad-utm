@@ -6,20 +6,25 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 }
 include '../koneksi.php';
 
-$kode_prodi = mysqli_real_escape_string($koneksi, $_GET['kode_prodi'] ?? '');
+$kode_prodi = $_POST['kode_prodi'] ?? '';
 
-if ($kode_prodi !== '') {
-    // Cek dulu apakah prodi masih dipakai di tabel lain (opsional, untuk safety)
-    $query  = "DELETE FROM tblprodi WHERE kode_prodi='$kode_prodi'";
-    $result = mysqli_query($koneksi, $query);
-
-    if ($result) {
-        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Data prodi berhasil dihapus.'];
-    } else {
-        $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Data gagal dihapus. Mungkin masih digunakan oleh mahasiswa atau kelas.'];
-    }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Metode tidak diizinkan.');
 }
 
-header("Location: prodi.php");
+if (is_string($kode_prodi) && $kode_prodi !== '') {
+    $stmt = $koneksi->prepare("DELETE FROM tblprodi WHERE kode_prodi = ?");
+    $stmt->bind_param("s", $kode_prodi);
+    $result = $stmt->execute();
+} else {
+    $result = false;
+}
+
+$_SESSION['flash'] = [
+    'type' => $result ? 'success' : 'error',
+    'message' => $result ? 'Data prodi berhasil dihapus.' : 'Data gagal dihapus. Mungkin masih digunakan oleh mahasiswa atau kelas.',
+];
+header("Location: prodi.php", true, 303);
 exit;
 ?>

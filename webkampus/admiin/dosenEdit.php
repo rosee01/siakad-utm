@@ -10,7 +10,10 @@ $pesan      = '';
 $pesan_type = '';
 
 // Ambil NIDN dari URL
-$nidn_get = mysqli_real_escape_string($koneksi, $_GET['nidn'] ?? '');
+$nidn_get = $_GET['nidn'] ?? '';
+if (!is_string($nidn_get)) {
+    $nidn_get = '';
+}
 
 // Jika tidak ada NIDN, kembali ke daftar
 if ($nidn_get === '') {
@@ -19,8 +22,10 @@ if ($nidn_get === '') {
 }
 
 // Ambil data dosen
-$queryEdit  = "SELECT * FROM tbldosen WHERE nidn='$nidn_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tbldosen WHERE nidn = ?");
+$stmt_edit->bind_param("s", $nidn_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: dosen.php");
@@ -37,9 +42,11 @@ if (isset($_POST["ubah"])) {
     $jns_kelamin = mysqli_real_escape_string($koneksi, $_POST["jns_kelamin"]);
     $telpn       = mysqli_real_escape_string($koneksi, trim($_POST["telpn"]));
 
-    $query = "UPDATE tbldosen SET nama_dosen='$nama_dosen', email='$email', jns_kelamin='$jns_kelamin',
-              telpn='$telpn' WHERE nidn='$nidn'";
-    $result = mysqli_query($koneksi, $query);
+    $stmt_update = $koneksi->prepare(
+        "UPDATE tbldosen SET nama_dosen=?, email=?, jns_kelamin=?, telpn=? WHERE nidn=?"
+    );
+    $stmt_update->bind_param("sssss", $nama_dosen, $email, $jns_kelamin, $telpn, $nidn_get);
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan = "Data berhasil diperbarui.";
@@ -82,6 +89,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="mb-3">
       <label class="form-label">Nomor Induk Dosen Nasional (NIDN)</label>
       <input type="text" id="nidn" name="nidn" class="form-control" 

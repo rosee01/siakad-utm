@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/includes/security.php';
 
 // Redirect jika belum login
 if (!isset($_SESSION['username']) || !isset($_SESSION['role'])) {
@@ -178,7 +179,12 @@ if (!is_string($search)) {
             <a href="?page=kelas"><i class="fa-solid fa-users"></i> Kelas</a>
             <a href="?page=ruangan"><i class="fa-solid fa-door-open"></i> Ruangan</a>
         <?php endif; ?>
-        <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        <form method="post" action="logout.php" style="display:inline;">
+            <?= csrf_field() ?>
+            <button type="submit" style="color:white;background:none;border:0;font-weight:600;padding:8px 14px;cursor:pointer;">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </form>
     </div>
     <form class="search-form" method="GET" action="" style="margin: 0 auto; display: flex; justify-content: center; align-items: center; gap: 10px;">
         <input type="hidden" name="page" value="<?= htmlspecialchars($page, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">

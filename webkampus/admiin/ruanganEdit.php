@@ -9,15 +9,20 @@ include '../koneksi.php';
 $pesan      = '';
 $pesan_type = '';
 
-$kode_get = mysqli_real_escape_string($koneksi, $_GET['kode_ruangan'] ?? '');
+$kode_get = $_GET['kode_ruangan'] ?? '';
+if (!is_string($kode_get)) {
+    $kode_get = '';
+}
 
 if ($kode_get === '') {
     header("Location: ruangan.php");
     exit;
 }
 
-$queryEdit  = "SELECT * FROM tbl_ruangan WHERE kode_ruangan='$kode_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tbl_ruangan WHERE kode_ruangan = ?");
+$stmt_edit->bind_param("s", $kode_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: ruangan.php");
@@ -27,11 +32,10 @@ if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
 $dataEdit = mysqli_fetch_array($resultEdit);
 
 if (isset($_POST["ubah"])) {
-    $kode_ruangan = mysqli_real_escape_string($koneksi, trim($_POST["kode_ruangan"]));
-    $nama_ruangan = mysqli_real_escape_string($koneksi, trim($_POST["nama_ruangan"]));
-
-    $query = "UPDATE tbl_ruangan SET nama_ruangan='$nama_ruangan' WHERE kode_ruangan='$kode_ruangan'";
-    $result = mysqli_query($koneksi, $query);
+    $nama_ruangan = trim($_POST["nama_ruangan"] ?? '');
+    $stmt_update = $koneksi->prepare("UPDATE tbl_ruangan SET nama_ruangan=? WHERE kode_ruangan=?");
+    $stmt_update->bind_param("ss", $nama_ruangan, $kode_get);
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan      = "Data ruangan berhasil diperbarui.";
@@ -78,6 +82,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">Kode Ruangan</label>

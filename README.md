@@ -11,6 +11,8 @@ print-ready official academic documents (KHS & KRS).
 
 Screenshots will be added after all visible personal and academic records have been replaced with fabricated, anonymized examples.
 
+The login page uses an AI-generated campus illustration, not a documentary photograph of the university.
+
 ---
 
 ## ✨ Features
@@ -105,21 +107,22 @@ css/
 
 ## 🔐 Security Notes
 
-- Prepared statements on authentication & critical flows
+- CSRF tokens protect POST forms; logout and destructive actions require POST
+- Prepared statements on authentication and CRUD mutations
 - `htmlspecialchars()` output escaping across all pages
-- Students can only view/edit **their own** data (server-side NIM validation)
+- Students can only view/edit **their own** data (server-side NIM validation); profile edits cannot change program or semester
+- KRS selections and administrator grade updates are validated against enrollment and course data on the server
 - Lecturer grade entry is restricted to the lecturer's own schedules and enrolled students
 - The legacy `page` parameter is allowlisted and HTML-attribute escaped
 - bcrypt password hashing with automatic legacy upgrade
-- This educational project is not ready for production use with real academic data; CSRF protection and prepared-statement coverage still need broader review
+- This educational project is not ready for production use with real academic data; authorization rules, input validation, password migration, and database constraints still need a comprehensive production review
 
 ---
 
 ## 🚧 Future Improvements
 
-- CSRF token protection on all forms
-- Full prepared-statement coverage on every module
 - Database normalization (separate schedule data from `tblmatkul`)
+- Add database foreign keys and uniqueness constraints for academic records
 - Pagination for large tables
 - Migration to Laravel (MVC)
 

@@ -17,57 +17,139 @@ while ($row = $res_mhs->fetch_assoc()) {
 }
 
 // Ambil NIM yang dipilih
-$nim = isset($_GET['nim']) ? $_GET['nim'] : '';
+$nim = isset($_GET['nim']) && is_string($_GET['nim']) ? $_GET['nim'] : '';
 
 // Proses update data KHS
 if (isset($_POST['update_khs'])) {
-    $nim       = $_POST['nim'];
-    $nama_mhs  = $_POST['nama_mhs'];
-    $semester  = $_POST['semester'];
-    $prodi     = $_POST['prodi'];
-    $alamat    = $_POST['alamat'];
+    $posted_nim = $_POST['nim'] ?? null;
+    $nama_mhs_input = $_POST['nama_mhs'] ?? null;
+    $semester = $_POST['semester'] ?? '';
+    $prodi_input = $_POST['prodi'] ?? null;
+    $alamat_input = $_POST['alamat'] ?? null;
+    $nama_mhs = is_string($nama_mhs_input) ? trim($nama_mhs_input) : null;
+    $prodi = is_string($prodi_input) ? trim($prodi_input) : null;
+    $alamat = is_string($alamat_input) ? trim($alamat_input) : null;
+    $nilai_post = $_POST['nilai'] ?? [];
+    $nilai_valid = [];
 
-    // Update data mahasiswa
-    $stmt = $koneksi->prepare("UPDATE tblmhs2 SET nama_mhs=?, semester=?, prodi=?, alamat=? WHERE nim=?");
-    $stmt->bind_param("sssss", $nama_mhs, $semester, $prodi, $alamat, $nim);
-    $stmt->execute();
+    if (
+        !is_string($posted_nim)
+        || $posted_nim === ''
+        || !is_string($nama_mhs)
+        || $nama_mhs === ''
+        || strlen($nama_mhs) > 150
+        || !is_string($semester)
+        || !ctype_digit($semester)
+        || (int) $semester < 1
+        || (int) $semester > 14
+        || !is_string($prodi)
+        || $prodi === ''
+        || strlen($prodi) > 150
+        || !is_string($alamat)
+        || strlen($alamat) > 255
+        || !is_array($nilai_post)
+        || count($nilai_post) > 100
+    ) {
+        $pesan = 'Data KHS tidak valid.';
+        $pesan_type = 'error';
+    } else {
+        $nim = $posted_nim;
+        foreach ($nilai_post as $kode_mk => $nilai) {
+            if (!is_string($kode_mk) || $kode_mk === '' || !is_string($nilai)) {
+                $nilai_valid = [];
+                $pesan_type = 'error';
+                break;
+            }
+            if ($nilai === '') {
+                continue;
+            }
+            if (!preg_match('/^(?:0|[1-9][0-9]{0,2})$/D', $nilai) || (int) $nilai > 100) {
+                $pesan_type = 'error';
+                break;
+            }
+            $nilai_valid[$kode_mk] = (int) $nilai;
+        }
 
-    // Update nilai matakuliah
-    if (isset($_POST['nilai']) && is_array($_POST['nilai'])) {
-        foreach ($_POST['nilai'] as $kode_mk => $nilai) {
-            if ($nilai === '' || $nilai === null) continue;
+        $stmt_mhs = $koneksi->prepare("SELECT nim FROM tblmhs2 WHERE nim = ? LIMIT 1");
+        $stmt_mhs->bind_param("s", $nim);
+        $stmt_mhs->execute();
+        $mhs_exists = $stmt_mhs->get_result()->fetch_assoc();
 
-            // Cari id_jadwal
-            $sql_jadwal = "SELECT j.id_jadwal FROM tbljadwalkuliah j
-                           JOIN tblmatkul m ON j.matakuliah = m.nama_mk
-                           WHERE m.kode_mk = ? LIMIT 1";
-            $stmt_jadwal = $koneksi->prepare($sql_jadwal);
-            $stmt_jadwal->bind_param("s", $kode_mk);
-            $stmt_jadwal->execute();
-            $result_jadwal = $stmt_jadwal->get_result();
-            $jadwal = $result_jadwal->fetch_assoc();
-            if (!$jadwal) continue;
-            $id_jadwal = $jadwal['id_jadwal'];
+        if ($pesan_type === 'error' || !$mhs_exists) {
+            $pesan = !$mhs_exists ? 'Mahasiswa tidak ditemukan.' : 'Nilai harus berupa angka antara 0 dan 100.';
+            $pesan_type = 'error';
+        } else {
+            $stmt_jadwal = $koneksi->prepare(
+                "SELECT j.id_jadwal
+                 FROM tblkrsdetail kd
+                 JOIN tblkrs k ON k.id_krs = kd.id_krs AND k.nim = kd.nim
+                 JOIN tbljadwalkuliah kelas_krs ON kelas_krs.id_jadwal = k.id_jadwal
+                 JOIN tbljadwalkuliah j ON j.kelas = kelas_krs.kelas
+                 JOIN tblmatkul m ON m.nama_mk = j.matakuliah AND m.kode_mk = kd.kode_mk
+                 WHERE kd.nim = ? AND kd.kode_mk = ?
+                 ORDER BY j.id_jadwal
+                 LIMIT 1"
+            );
+            $grades_with_schedule = [];
+            foreach ($nilai_valid as $kode_mk => $nilai) {
+                $stmt_jadwal->bind_param("ss", $nim, $kode_mk);
+                $stmt_jadwal->execute();
+                $jadwal = $stmt_jadwal->get_result()->fetch_assoc();
+                if (!$jadwal) {
+                    $pesan = 'Nilai hanya dapat diubah untuk mata kuliah yang tercatat pada KRS mahasiswa.';
+                    $pesan_type = 'error';
+                    break;
+                }
 
-            // Cek apakah sudah ada nilai
-            $cek = $koneksi->prepare("SELECT * FROM tblnilai WHERE nim = ? AND id_jadwal = ?");
-            $cek->bind_param("si", $nim, $id_jadwal);
-            $cek->execute();
-            $cek_result = $cek->get_result();
-            if ($cek_result->fetch_assoc()) {
-                $update = $koneksi->prepare("UPDATE tblnilai SET nilai = ? WHERE nim = ? AND id_jadwal = ?");
-                $update->bind_param("isi", $nilai, $nim, $id_jadwal);
-                $update->execute();
-            } else {
-                $insert = $koneksi->prepare("INSERT INTO tblnilai (nim, id_jadwal, nilai) VALUES (?, ?, ?)");
-                $insert->bind_param("sii", $nim, $id_jadwal, $nilai);
-                $insert->execute();
+                $grades_with_schedule[] = [
+                    'id_jadwal' => (int) $jadwal['id_jadwal'],
+                    'nilai' => $nilai,
+                ];
+            }
+
+            if ($pesan_type !== 'error') {
+                try {
+                    $koneksi->begin_transaction();
+                    $stmt_update_mhs = $koneksi->prepare(
+                        "UPDATE tblmhs2 SET nama_mhs=?, semester=?, prodi=?, alamat=? WHERE nim=?"
+                    );
+                    $stmt_update_mhs->bind_param("sssss", $nama_mhs, $semester, $prodi, $alamat, $nim);
+                    $stmt_update_mhs->execute();
+
+                    $stmt_check = $koneksi->prepare(
+                        "SELECT id_nilai FROM tblnilai WHERE nim = ? AND id_jadwal = ? LIMIT 1"
+                    );
+                    $stmt_update = $koneksi->prepare(
+                        "UPDATE tblnilai SET nilai = ? WHERE nim = ? AND id_jadwal = ?"
+                    );
+                    $stmt_insert = $koneksi->prepare(
+                        "INSERT INTO tblnilai (nim, id_jadwal, nilai) VALUES (?, ?, ?)"
+                    );
+                    $position = 0;
+                    foreach ($nilai_valid as $kode_mk => $nilai) {
+                        $id_jadwal = $grades_with_schedule[$position++]['id_jadwal'];
+                        $stmt_check->bind_param("si", $nim, $id_jadwal);
+                        $stmt_check->execute();
+                        if ($stmt_check->get_result()->fetch_assoc()) {
+                            $stmt_update->bind_param("isi", $nilai, $nim, $id_jadwal);
+                            $stmt_update->execute();
+                        } else {
+                            $stmt_insert->bind_param("sii", $nim, $id_jadwal, $nilai);
+                            $stmt_insert->execute();
+                        }
+                    }
+                    $koneksi->commit();
+                    $pesan = 'KHS berhasil diperbarui.';
+                    $pesan_type = 'success';
+                } catch (mysqli_sql_exception $exception) {
+                    $koneksi->rollback();
+                    error_log('Gagal memperbarui KHS admin: ' . $exception->getMessage());
+                    $pesan = 'KHS gagal diperbarui. Silakan coba lagi.';
+                    $pesan_type = 'error';
+                }
             }
         }
     }
-
-    $pesan      = "KHS berhasil diperbarui.";
-    $pesan_type = 'success';
 }
 
 // Ambil data mahasiswa yang dipilih
@@ -161,6 +243,7 @@ include '../includes/topbar.php';
 
   <!-- Form Edit Data Mahasiswa -->
   <form method="post">
+    <?= csrf_field() ?>
     <input type="hidden" name="nim" value="<?= htmlspecialchars($mhs['nim']) ?>">
 
     <div class="data-card" style="margin-bottom:24px;">

@@ -60,10 +60,11 @@ include '../includes/topbar.php';
               <a href="matkulEdit.php?kode_mk=<?= urlencode($row['kode_mk']) ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="matkuldelete.php?kode_mk=<?= urlencode($row['kode_mk']) ?>" class="btn-app btn-sm-app danger"
-                 onclick="return confirm('Yakin ingin menghapus?')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </a>
+              <form method="post" action="matkuldelete.php" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus?')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="kode_mk" value="<?= htmlspecialchars($row['kode_mk'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                <button type="submit" class="btn-app btn-sm-app danger"><i class="fas fa-trash-alt"></i> Hapus</button>
+              </form>
             </td>
           </tr>
         <?php endwhile; ?>

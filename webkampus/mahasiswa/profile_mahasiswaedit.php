@@ -12,11 +12,12 @@ $pesan      = '';
 $pesan_type = '';
 
 // Ambil NIM dari URL
-$nim_get = mysqli_real_escape_string($koneksi, $_GET['nim'] ?? '');
+$nim_param = $_GET['nim'] ?? '';
+$nim_get = is_string($nim_param) ? trim($nim_param) : '';
 
 // ✅ Keamanan: pastikan mahasiswa hanya bisa edit profil sendiri
 $nim_session = $_SESSION['nim'] ?? ($_SESSION['ref_id'] ?? '');
-if ($nim_get === '' || $nim_get !== $nim_session) {
+if (!is_string($nim_session) || $nim_get === '' || $nim_get !== $nim_session) {
     header("Location: profil_mahasiswa.php");
     exit;
 }
@@ -37,37 +38,43 @@ $dataEdit = mysqli_fetch_array($resultEdit);
 
 // Proses update
 if (isset($_POST["ubah"])) {
-    $nim         = mysqli_real_escape_string($koneksi, trim($_POST["nim"]));
-    $nama_mhs    = mysqli_real_escape_string($koneksi, trim($_POST["nama_mhs"]));
-    $prodi       = mysqli_real_escape_string($koneksi, trim($_POST["prodi"]));
-    $semester    = intval($_POST["semester"]);
-    $jns_kelamin = mysqli_real_escape_string($koneksi, $_POST["jns_kelamin"]);
-    $alamat      = mysqli_real_escape_string($koneksi, trim($_POST["alamat"]));
+    $nama_mhs_input = $_POST["nama_mhs"] ?? null;
+    $jns_kelamin = $_POST["jns_kelamin"] ?? null;
+    $alamat_input = $_POST["alamat"] ?? null;
+    $nama_mhs = is_string($nama_mhs_input) ? trim($nama_mhs_input) : null;
+    $alamat = is_string($alamat_input) ? trim($alamat_input) : null;
 
-    // ✅ Keamanan: hanya bisa update NIM sendiri
-    if ($nim !== $nim_session) {
-        header("Location: profil_mahasiswa.php");
-        exit;
-    }
-
-    $query = "UPDATE tblmhs2 SET nama_mhs=?, prodi=?, semester=?, jns_kelamin=?, alamat=? WHERE nim=?";
-    $stmt2 = $koneksi->prepare($query);
-    $stmt2->bind_param("ssssss", $nama_mhs, $prodi, $semester, $jns_kelamin, $alamat, $nim);
-    $result = $stmt2->execute();
-
-    if ($result) {
-        $pesan      = "Profil berhasil diperbarui.";
-        $pesan_type = 'success';
-        // Refresh data
-        $dataEdit = array_merge($dataEdit, $_POST);
-    } else {
-        $pesan      = "Profil gagal diperbarui.";
+    if (
+        !is_string($nama_mhs)
+        || $nama_mhs === ''
+        || strlen($nama_mhs) > 150
+        || !is_string($jns_kelamin)
+        || !in_array($jns_kelamin, ['L', 'P'], true)
+        || !is_string($alamat)
+        || strlen($alamat) > 255
+    ) {
+        $pesan = "Data profil tidak valid.";
         $pesan_type = 'error';
+    } else {
+        $stmt2 = $koneksi->prepare(
+            "UPDATE tblmhs2 SET nama_mhs=?, jns_kelamin=?, alamat=? WHERE nim=?"
+        );
+        $stmt2->bind_param("ssss", $nama_mhs, $jns_kelamin, $alamat, $nim_session);
+        $result = $stmt2->execute();
+
+        if ($result) {
+            $pesan = "Profil berhasil diperbarui.";
+            $pesan_type = 'success';
+            $stmt = $koneksi->prepare("SELECT * FROM tblmhs2 WHERE nim = ?");
+            $stmt->bind_param("s", $nim_session);
+            $stmt->execute();
+            $dataEdit = $stmt->get_result()->fetch_assoc();
+        } else {
+            $pesan = "Profil gagal diperbarui.";
+            $pesan_type = 'error';
+        }
     }
 }
-
-/* ---------- DATA DROPDOWN PRODI ---------- */
-$prodi_list = mysqli_query($koneksi, "SELECT * FROM tblprodi ORDER BY nama_prodi ASC");
 
 $currentPage = 'profil';
 $page_title  = 'Edit Profil';
@@ -101,6 +108,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">NIM</label>
@@ -119,26 +127,13 @@ include '../includes/topbar.php';
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">Program Studi</label>
-        <select name="prodi" class="form-select" required>
-          <option value="" disabled>-- Pilih Program Studi --</option>
-          <?php while ($p = mysqli_fetch_array($prodi_list)):
-            $selected = ($p['nama_prodi'] == $dataEdit['prodi']) ? 'selected' : '';
-          ?>
-            <option value="<?= htmlspecialchars($p['nama_prodi']) ?>" <?= $selected ?>>
-              <?= htmlspecialchars($p['kode_prodi']) ?> - <?= htmlspecialchars($p['nama_prodi']) ?>
-            </option>
-          <?php endwhile; ?>
-        </select>
+        <input type="text" class="form-control" value="<?= htmlspecialchars($dataEdit['prodi']) ?>" readonly />
+        <small class="form-text text-muted" style="font-size:12px;">Perubahan program studi harus melalui administrator.</small>
       </div>
       <div class="col-md-6 mb-3">
         <label class="form-label">Semester</label>
-        <select name="semester" class="form-select" required>
-          <?php for ($i = 1; $i <= 14; $i++):
-            $selected = ($i == $dataEdit['semester']) ? 'selected' : '';
-          ?>
-            <option value="<?= $i ?>" <?= $selected ?>><?= $i ?></option>
-          <?php endfor; ?>
-        </select>
+        <input type="text" class="form-control" value="<?= htmlspecialchars((string) $dataEdit['semester']) ?>" readonly />
+        <small class="form-text text-muted" style="font-size:12px;">Perubahan semester harus melalui administrator.</small>
       </div>
     </div>
 

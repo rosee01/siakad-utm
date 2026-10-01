@@ -10,7 +10,10 @@ $pesan      = '';
 $pesan_type = '';
 
 // Ambil kode dari URL
-$kode_get = mysqli_real_escape_string($koneksi, $_GET['kode_mk'] ?? '');
+$kode_get = $_GET['kode_mk'] ?? '';
+if (!is_string($kode_get)) {
+    $kode_get = '';
+}
 
 if ($kode_get === '') {
     header("Location: matkul.php");
@@ -18,8 +21,10 @@ if ($kode_get === '') {
 }
 
 // Ambil data matkul
-$queryEdit  = "SELECT * FROM tblmatkul WHERE kode_mk='$kode_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tblmatkul WHERE kode_mk = ?");
+$stmt_edit->bind_param("s", $kode_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: matkul.php");
@@ -41,18 +46,25 @@ if (isset($_POST["ubah"])) {
     $jam_selesai = mysqli_real_escape_string($koneksi, $_POST["jam_selesai"]);
     $ruang       = mysqli_real_escape_string($koneksi, $_POST["ruang"]);
 
-    $query = "UPDATE tblmatkul SET 
-                nama_mk='$nama_mk', 
-                sks='$sks', 
-                semester='$semester',
-                id_prodi='$id_prodi', 
-                nama_dosen='$nama_dosen', 
-                hari='$hari', 
-                jam_mulai='$jam_mulai', 
-                jam_selesai='$jam_selesai', 
-                ruang='$ruang' 
-              WHERE kode_mk='$kode_mk'";
-    $result = mysqli_query($koneksi, $query);
+    $stmt_update = $koneksi->prepare(
+        "UPDATE tblmatkul
+         SET nama_mk=?, sks=?, semester=?, id_prodi=?, nama_dosen=?, hari=?, jam_mulai=?, jam_selesai=?, ruang=?
+         WHERE kode_mk=?"
+    );
+    $stmt_update->bind_param(
+        "siisssssss",
+        $nama_mk,
+        $sks,
+        $semester,
+        $id_prodi,
+        $nama_dosen,
+        $hari,
+        $jam_mulai,
+        $jam_selesai,
+        $ruang,
+        $kode_get
+    );
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan      = "Data mata kuliah berhasil diperbarui.";
@@ -103,6 +115,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <!-- Baris 1: Kode MK (readonly), Nama MK -->
     <div class="row">
       <div class="col-md-4 mb-3">

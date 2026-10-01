@@ -6,19 +6,25 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 }
 include '../koneksi.php';
 
-$kode_ruangan = mysqli_real_escape_string($koneksi, $_GET['kode_ruangan'] ?? '');
+$kode_ruangan = $_POST['kode_ruangan'] ?? '';
 
-if ($kode_ruangan !== '') {
-    $query  = "DELETE FROM tbl_ruangan WHERE kode_ruangan='$kode_ruangan'";
-    $result = mysqli_query($koneksi, $query);
-
-    if ($result) {
-        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Data ruangan berhasil dihapus.'];
-    } else {
-        $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Data gagal dihapus. Mungkin masih digunakan di jadwal kuliah.'];
-    }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Metode tidak diizinkan.');
 }
 
-header("Location: ruangan.php");
+if (is_string($kode_ruangan) && $kode_ruangan !== '') {
+    $stmt = $koneksi->prepare("DELETE FROM tbl_ruangan WHERE kode_ruangan = ?");
+    $stmt->bind_param("s", $kode_ruangan);
+    $result = $stmt->execute();
+} else {
+    $result = false;
+}
+
+$_SESSION['flash'] = [
+    'type' => $result ? 'success' : 'error',
+    'message' => $result ? 'Data ruangan berhasil dihapus.' : 'Data gagal dihapus. Mungkin masih digunakan di jadwal kuliah.',
+];
+header("Location: ruangan.php", true, 303);
 exit;
 ?>

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/includes/security.php';
+
 $host = "localhost";
 $nama ="root";
 $pass ="";

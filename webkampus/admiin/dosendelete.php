@@ -6,9 +6,14 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 }
 include "koneksi.php";
 
-$nidn = $_GET['nidn'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Metode tidak diizinkan.');
+}
 
-if ($nidn !== '') {
+$nidn = $_POST['nidn'] ?? '';
+
+if (is_string($nidn) && $nidn !== '') {
     $stmt = $koneksi->prepare("DELETE FROM tbldosen WHERE nidn = ?");
     $stmt->bind_param("s", $nidn);
     $resultdelete = $stmt->execute();
@@ -16,9 +21,10 @@ if ($nidn !== '') {
     $resultdelete = false;
 }
 
-if ($resultdelete) {
-    echo "<script>alert('Data berhasil dihapus'); window.location.href='dosen.php';</script>";
-} else {
-    echo "<script>alert('Data gagal dihapus'); window.location.href='dosen.php';</script>";
-}
+$_SESSION['flash'] = [
+    'type' => $resultdelete ? 'success' : 'error',
+    'message' => $resultdelete ? 'Data dosen berhasil dihapus.' : 'Data dosen gagal dihapus.',
+];
+header("Location: dosen.php", true, 303);
+exit;
 ?>

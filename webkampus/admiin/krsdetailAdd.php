@@ -15,9 +15,11 @@ if (isset($_POST["simpan"])) {
     $nim          = mysqli_real_escape_string($koneksi, trim($_POST["nim"]));
     $kode_mk      = mysqli_real_escape_string($koneksi, trim($_POST["kode_mk"]));
 
-    $query  = "INSERT INTO tblkrsdetail (id_krsdetail, id_krs, nim, kode_mk) 
-               VALUES ('$id_krsdetail', '$id_krs', '$nim', '$kode_mk')";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = $koneksi->prepare(
+        "INSERT INTO tblkrsdetail (id_krsdetail, id_krs, nim, kode_mk) VALUES (?, ?, ?, ?)"
+    );
+    $stmt->bind_param("ssss", $id_krsdetail, $id_krs, $nim, $kode_mk);
+    $result = $stmt->execute();
 
     if ($result) {
         header("Location: krsdetail.php");
@@ -61,6 +63,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="mb-3">
       <label class="form-label">ID KRS Detail</label>
       <input type="text" name="id_krsdetail" class="form-control" required placeholder="Contoh: KD001" />

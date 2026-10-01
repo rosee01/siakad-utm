@@ -47,10 +47,11 @@ include '../includes/topbar.php';
               <a href="ruanganEdit.php?kode_ruangan=<?= urlencode($r['kode_ruangan']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="ruangandelete.php?kode_ruangan=<?= urlencode($r['kode_ruangan']); ?>" class="btn-app btn-sm-app danger"
-                 onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </a>
+              <form method="post" action="ruangandelete.php" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="kode_ruangan" value="<?= htmlspecialchars($r['kode_ruangan'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                <button type="submit" class="btn-app btn-sm-app danger"><i class="fas fa-trash-alt"></i> Hapus</button>
+              </form>
             </td>
           </tr>
         <?php endwhile; ?>

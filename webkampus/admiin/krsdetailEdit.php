@@ -10,7 +10,10 @@ $pesan      = '';
 $pesan_type = '';
 
 // Ambil ID dari URL
-$id_get = mysqli_real_escape_string($koneksi, $_GET['id_krsdetail'] ?? '');
+$id_get = $_GET['id_krsdetail'] ?? '';
+if (!is_string($id_get)) {
+    $id_get = '';
+}
 
 if ($id_get === '') {
     header("Location: krsdetail.php");
@@ -18,8 +21,10 @@ if ($id_get === '') {
 }
 
 // Ambil data krsdetail
-$queryEdit  = "SELECT * FROM tblkrsdetail WHERE id_krsdetail='$id_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tblkrsdetail WHERE id_krsdetail = ?");
+$stmt_edit->bind_param("s", $id_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: krsdetail.php");
@@ -30,13 +35,16 @@ $dataEdit = mysqli_fetch_array($resultEdit);
 
 // Proses update
 if (isset($_POST["ubah"])) {
-    $id_krsdetail = mysqli_real_escape_string($koneksi, trim($_POST["id_krsdetail"]));
+    $id_krsdetail = $id_get;
     $id_krs       = mysqli_real_escape_string($koneksi, trim($_POST["id_krs"]));
     $nim          = mysqli_real_escape_string($koneksi, trim($_POST["nim"]));
     $kode_mk      = mysqli_real_escape_string($koneksi, trim($_POST["kode_mk"]));
 
-    $query = "UPDATE tblkrsdetail SET id_krs='$id_krs', nim='$nim', kode_mk='$kode_mk' WHERE id_krsdetail='$id_krsdetail'";
-    $result = mysqli_query($koneksi, $query);
+    $stmt_update = $koneksi->prepare(
+        "UPDATE tblkrsdetail SET id_krs=?, nim=?, kode_mk=? WHERE id_krsdetail=?"
+    );
+    $stmt_update->bind_param("ssss", $id_krs, $nim, $kode_mk, $id_krsdetail);
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan      = "Data berhasil diperbarui.";
@@ -85,6 +93,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">ID KRS Detail</label>

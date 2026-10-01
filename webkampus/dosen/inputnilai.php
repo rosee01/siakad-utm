@@ -6,6 +6,10 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'dosen') {
     header('Location: ../login.php');
     exit;
 }
+if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
 
 $ref_id = $_SESSION['ref_id'];
 
@@ -65,7 +69,14 @@ if ($selected_jadwal) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_nilai'])) {
-    if (!$selected_info) {
+    if (
+        !isset($_POST['csrf_token'])
+        || !is_string($_POST['csrf_token'])
+        || !hash_equals($csrf_token, $_POST['csrf_token'])
+    ) {
+        $pesan = 'Permintaan tidak valid. Muat ulang halaman dan coba lagi.';
+        $pesan_type = 'error';
+    } elseif (!$selected_info) {
         $pesan = 'Jadwal tidak valid atau bukan jadwal mengajar Anda.';
         $pesan_type = 'error';
     } elseif (!isset($_POST['nilai']) || !is_array($_POST['nilai'])) {
@@ -220,6 +231,7 @@ include '../includes/topbar.php';
     <?php else: ?>
       <form method="post">
         <input type="hidden" name="jadwal" value="<?= htmlspecialchars((string) $selected_jadwal, ENT_QUOTES, 'UTF-8') ?>">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
         <div class="table-responsive">
           <table class="table-app">
             <thead>

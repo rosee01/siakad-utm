@@ -18,8 +18,10 @@ if ($id_get === '') {
 }
 
 // Ambil data krs
-$queryEdit  = "SELECT * FROM tblkrs WHERE id_krs='$id_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tblkrs WHERE id_krs = ?");
+$stmt_edit->bind_param("s", $id_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: krs.php");
@@ -37,8 +39,11 @@ if (isset($_POST["ubah"])) {
     $semester     = intval($_POST["semester"]);
     $tahun_ajaran = mysqli_real_escape_string($koneksi, trim($_POST["tahun_ajaran"]));
 
-    $query = "UPDATE tblkrs SET nidn='$nidn', nim='$nim', id_jadwal='$id_jadwal', semester='$semester', tahun_ajaran='$tahun_ajaran' WHERE id_krs='$id_krs'";
-    $result = mysqli_query($koneksi, $query);
+    $stmt_update = $koneksi->prepare(
+        "UPDATE tblkrs SET nidn=?, nim=?, id_jadwal=?, semester=?, tahun_ajaran=? WHERE id_krs=?"
+    );
+    $stmt_update->bind_param("ssssss", $nidn, $nim, $id_jadwal, $semester, $tahun_ajaran, $id_get);
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan      = "Data berhasil diperbarui.";
@@ -88,6 +93,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">ID KRS</label>

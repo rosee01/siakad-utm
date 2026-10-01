@@ -6,36 +6,24 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 }
 include "koneksi.php";
 
-$pesan = "";
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Metode tidak diizinkan.');
+}
 
-if (isset($_GET['id_krsdetail'])) {
-    $id_krsdetail = $_GET['id_krsdetail'];
-
+$id_krsdetail = $_POST['id_krsdetail'] ?? '';
+if (is_scalar($id_krsdetail) && ctype_digit((string) $id_krsdetail) && (int) $id_krsdetail > 0) {
+    $id_krsdetail = (int) $id_krsdetail;
     $stmt = $koneksi->prepare("DELETE FROM tblkrsdetail WHERE id_krsdetail = ?");
     $stmt->bind_param("i", $id_krsdetail);
     $result = $stmt->execute();
-
-    if ($result) {
-        $pesan = "<div style='color:green;'>Data KRS Detail dengan ID <strong>" . htmlspecialchars($id_krsdetail) . "</strong> berhasil dihapus.</div>";
-    } else {
-        $pesan = "<div style='color:red;'>Data gagal dihapus: " . htmlspecialchars($koneksi->error) . "</div>";
-    }
 } else {
-    $pesan = "<div style='color:red;'>ID KRS Detail tidak ditemukan di URL.</div>";
+    $result = false;
 }
-?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Hapus Data KRS Detail</title>
-</head>
-<body>
-    <h2 align="center">HAPUS DATA KRS DETAIL</h2>
-    <div align="center">
-        <?= $pesan ?><br><br>
-        <a href="krsdetail.php">← Kembali ke Data KRS Detail</a>
-    </div>
-</body>
-</html>
+$_SESSION['flash'] = [
+    'type' => $result ? 'success' : 'error',
+    'message' => $result ? 'Data KRS detail berhasil dihapus.' : 'Data KRS detail gagal dihapus.',
+];
+header("Location: krsdetail.php", true, 303);
+exit;

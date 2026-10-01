@@ -18,8 +18,10 @@ if ($id_get === '') {
 }
 
 // Ambil data jadwal
-$queryEdit  = "SELECT * FROM tbljadwalkuliah WHERE id_jadwal='$id_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tbljadwalkuliah WHERE id_jadwal = ?");
+$stmt_edit->bind_param("s", $id_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: jadwalkuliah.php");
@@ -40,12 +42,24 @@ if (isset($_POST["ubah"])) {
     $ruang       = mysqli_real_escape_string($koneksi, $_POST["ruang"]);
     $kelas       = mysqli_real_escape_string($koneksi, trim($_POST["kelas"]));
 
-    $query = "UPDATE tbljadwalkuliah 
-              SET matakuliah='$matakuliah', dosen='$dosen', hari='$hari', 
-                  jam_mulai='$jam_mulai', jam_selesai='$jam_selesai', semester='$semester', ruang='$ruang', kelas='$kelas' 
-              WHERE id_jadwal='$id_jadwal'";
-
-    $result = mysqli_query($koneksi, $query);
+    $stmt_update = $koneksi->prepare(
+        "UPDATE tbljadwalkuliah
+         SET matakuliah=?, dosen=?, hari=?, jam_mulai=?, jam_selesai=?, semester=?, ruang=?, kelas=?
+         WHERE id_jadwal=?"
+    );
+    $stmt_update->bind_param(
+        "sssssisss",
+        $matakuliah,
+        $dosen,
+        $hari,
+        $jam_mulai,
+        $jam_selesai,
+        $semester,
+        $ruang,
+        $kelas,
+        $id_get
+    );
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan      = "Data berhasil diperbarui.";
@@ -96,6 +110,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">ID Jadwal</label>

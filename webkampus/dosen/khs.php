@@ -15,14 +15,38 @@ $stmt->bind_param("s", $nidn);
 $stmt->execute();
 $dosen = $stmt->get_result()->fetch_assoc();
 
-// Ambil semua mahasiswa
+if (!$dosen) {
+    http_response_code(403);
+    exit('Data dosen tidak ditemukan.');
+}
+
+// Batasi daftar mahasiswa ke peserta pada jadwal dosen ini.
 $mhs_list = [];
-$res_mhs = $koneksi->query("SELECT nim, nama_mhs FROM tblmhs2 ORDER BY nama_mhs");
+$stmt_mhs = $koneksi->prepare(
+    "SELECT DISTINCT m.nim, m.nama_mhs
+     FROM tblmhs2 m
+     JOIN tblkrs k ON k.nim = m.nim
+     JOIN tbljadwalkuliah j ON j.id_jadwal = k.id_jadwal
+     WHERE j.dosen = ?
+     ORDER BY m.nama_mhs"
+);
+$stmt_mhs->bind_param("s", $dosen['nama_dosen']);
+$stmt_mhs->execute();
+$res_mhs = $stmt_mhs->get_result();
 while ($row = $res_mhs->fetch_assoc()) {
     $mhs_list[] = $row;
 }
 
-$nim = isset($_GET['nim']) ? $_GET['nim'] : '';
+$nim = $_GET['nim'] ?? '';
+if (!is_string($nim)) {
+    $nim = '';
+}
+
+if ($nim !== '' && !in_array($nim, array_column($mhs_list, 'nim'), true)) {
+    http_response_code(403);
+    exit('Anda tidak memiliki akses ke data mahasiswa ini.');
+}
+
 $mhs = null;
 if ($nim) {
     $stmt = $koneksi->prepare("SELECT * FROM tblmhs2 WHERE nim = ?");

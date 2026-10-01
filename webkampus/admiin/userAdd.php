@@ -10,25 +10,68 @@ $pesan      = '';
 $pesan_type = '';
 
 if (isset($_POST["simpan"])) {
-    $id_user    = mysqli_real_escape_string($koneksi, trim($_POST["id_user"]));
-    $username   = mysqli_real_escape_string($koneksi, trim($_POST["username"]));
-    // ✅ Password di-hash dengan bcrypt (standar industri)
-    $password   = password_hash($_POST["password"], PASSWORD_DEFAULT);
-    $role       = mysqli_real_escape_string($koneksi, $_POST["role"]);
-    $ref_id     = mysqli_real_escape_string($koneksi, trim($_POST["ref_id"]));
-    $status     = mysqli_real_escape_string($koneksi, $_POST["status"]);
-    $last_login = mysqli_real_escape_string($koneksi, $_POST["last_login"] ?: null);
+    $fields = ['id_user', 'username', 'password', 'role', 'ref_id', 'status', 'last_login'];
+    $input = [];
+    foreach ($fields as $field) {
+        $value = $_POST[$field] ?? '';
+        $input[$field] = is_string($value) ? trim($value) : null;
+    }
+    [$id_user, $username, $plain_password, $role, $ref_id, $status, $last_login_input] = array_values($input);
 
-    $query  = "INSERT INTO user (id_user, username, password, role, ref_id, status, last_login)
-               VALUES ('$id_user', '$username', '$password', '$role', '$ref_id', '$status', " .
-               ($last_login ? "'$last_login'" : "NULL") . ")";
-
-    if (mysqli_query($koneksi, $query)) {
-        header("Location: user.php");
-        exit;
-    } else {
-        $pesan      = "Gagal menyimpan data. Pastikan ID User atau Username belum terdaftar.";
+    if (
+        in_array(null, $input, true)
+        || $id_user === ''
+        || strlen($id_user) > 30
+        || $username === ''
+        || strlen($username) > 100
+        || strlen($plain_password) < 8
+        || strlen($plain_password) > 4096
+        || $ref_id === ''
+        || strlen($ref_id) > 30
+        || !in_array($role, ['admin', 'dosen', 'mahasiswa'], true)
+        || !in_array($status, ['aktif', 'nonaktif'], true)
+    ) {
+        $pesan = "Data user tidak valid. Pastikan password minimal 8 karakter.";
         $pesan_type = 'error';
+    } else {
+        $last_login = null;
+        if ($last_login_input !== '') {
+            $parsed_last_login = DateTime::createFromFormat('Y-m-d\TH:i', $last_login_input);
+            if (!$parsed_last_login || $parsed_last_login->format('Y-m-d\TH:i') !== $last_login_input) {
+                $pesan = "Format waktu login terakhir tidak valid.";
+                $pesan_type = 'error';
+            } else {
+                $last_login = $parsed_last_login->format('Y-m-d H:i:s');
+            }
+        }
+
+        if ($pesan_type !== 'error' && ($role === 'dosen' || $role === 'mahasiswa')) {
+            $table = $role === 'dosen' ? 'tbldosen' : 'tblmhs2';
+            $column = $role === 'dosen' ? 'nidn' : 'nim';
+            $stmt_ref = $koneksi->prepare("SELECT 1 FROM {$table} WHERE {$column} = ? LIMIT 1");
+            $stmt_ref->bind_param("s", $ref_id);
+            $stmt_ref->execute();
+            if (!$stmt_ref->get_result()->fetch_row()) {
+                $pesan = "ID referensi tidak sesuai dengan role yang dipilih.";
+                $pesan_type = 'error';
+            }
+        }
+
+        if ($pesan_type !== 'error') {
+            $password = password_hash($plain_password, PASSWORD_DEFAULT);
+            $stmt = $koneksi->prepare(
+                "INSERT INTO user (id_user, username, password, role, ref_id, status, last_login)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->bind_param("sssssss", $id_user, $username, $password, $role, $ref_id, $status, $last_login);
+            if ($stmt->execute()) {
+                header("Location: user.php");
+                exit;
+            } else {
+                $pesan = "Gagal menyimpan data. Pastikan ID User atau Username belum terdaftar.";
+                $pesan_type = 'error';
+            }
+        }
     }
 }
 
@@ -59,6 +102,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">ID User</label>
@@ -72,7 +116,7 @@ include '../includes/topbar.php';
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" required placeholder="Minimal 6 karakter" />
+        <input type="password" name="password" class="form-control" required minlength="8" placeholder="Minimal 8 karakter" />
         <small class="form-text text-muted" style="font-size:12px;">Akan disimpan ter-enkripsi (bcrypt).</small>
       </div>
       <div class="col-md-6 mb-3">

@@ -41,50 +41,144 @@ if ($semester_mahasiswa < 1 || $semester_mahasiswa > 8) $semester_mahasiswa = 1;
 
 $error = '';
 if (isset($_POST['buatkrs'])) {
-    $semester     = $_POST['semester'];
-    $tahun_ajaran = $_POST['tahun_ajaran'];
-    $nidn         = $_POST['nidn'];
     $selected_mk  = $_POST['kode_mk'] ?? [];
+    $semester     = $_POST['semester'] ?? '';
+    $tahun_ajaran = $_POST['tahun_ajaran'] ?? '';
+    $nidn         = $_POST['nidn'] ?? '';
     $id_jadwal    = $_POST['id_jadwal'] ?? '';
 
-    if (empty($selected_mk)) {
-        $error = "Pilih minimal satu mata kuliah.";
-    } elseif (empty($id_jadwal)) {
+    if (
+        !is_string($semester)
+        || !ctype_digit($semester)
+        || (int) $semester < 1
+        || (int) $semester > 8
+        || !is_string($tahun_ajaran)
+        || !preg_match('/^\\d{4}\\/\\d{4}$/', $tahun_ajaran)
+        || (int) substr($tahun_ajaran, 5, 4) !== (int) substr($tahun_ajaran, 0, 4) + 1
+        || !is_string($nidn)
+        || !is_string($id_jadwal)
+        || !ctype_digit($id_jadwal)
+        || (int) $id_jadwal < 1
+        || !is_array($selected_mk)
+        || count($selected_mk) < 1
+        || count($selected_mk) > 30
+        || count(array_filter(
+            $selected_mk,
+            static fn ($kode_mk) => !is_string($kode_mk) || $kode_mk === ''
+        )) > 0
+    ) {
+        $error = "Data KRS tidak valid. Periksa semester, tahun ajaran, dosen, jadwal, dan mata kuliah.";
+    } elseif (!$nidn) {
+        $error = "Pilih dosen wali.";
+    } elseif (!$id_jadwal) {
         $error = "Pilih kelas terlebih dahulu.";
     } else {
-        // Cek KRS sudah ada? Kalau sudah ada, pakai id_krs yang sama (bukan bikin baru)
-        $stmt_check = mysqli_prepare($koneksi, "SELECT id_krs FROM tblkrs WHERE nim = ? AND semester = ? AND tahun_ajaran = ?");
-        mysqli_stmt_bind_param($stmt_check, 'sss', $nim, $semester, $tahun_ajaran);
-        mysqli_stmt_execute($stmt_check);
-        $existing = mysqli_stmt_get_result($stmt_check)->fetch_assoc();
+        $selected_mk = array_values(array_unique($selected_mk));
+        $stmt = $koneksi->prepare("SELECT nidn FROM tbldosen WHERE nidn = ? LIMIT 1");
+        $stmt->bind_param('s', $nidn);
+        $stmt->execute();
+        $dosen_valid = $stmt->get_result()->fetch_assoc();
 
-        if ($existing) {
-            $id_krs = $existing['id_krs'];
+        $stmt = $koneksi->prepare("SELECT id_jadwal, kelas FROM tbljadwalkuliah WHERE id_jadwal = ? LIMIT 1");
+        $id_jadwal_int = (int) $id_jadwal;
+        $stmt->bind_param('i', $id_jadwal_int);
+        $stmt->execute();
+        $jadwal = $stmt->get_result()->fetch_assoc();
+
+        if (!$dosen_valid || !$jadwal) {
+            $error = "Dosen wali atau jadwal yang dipilih tidak terdaftar.";
         } else {
-            $stmt_krs = mysqli_prepare($koneksi, "INSERT INTO tblkrs (nim, semester, tahun_ajaran, nidn, id_jadwal) VALUES (?, ?, ?, ?, ?)");
-            mysqli_stmt_bind_param($stmt_krs, 'sssss', $nim, $semester, $tahun_ajaran, $nidn, $id_jadwal);
-            mysqli_stmt_execute($stmt_krs);
-            $id_krs = mysqli_insert_id($koneksi);
-        }
+            $course_valid = true;
+            $course_exists = $koneksi->prepare(
+                "SELECT kode_mk FROM tblmatkul WHERE kode_mk = ? AND semester = ? LIMIT 1"
+            );
+            $offering_exists = $koneksi->prepare(
+                "SELECT j.id_jadwal
+                 FROM tbljadwalkuliah j
+                 JOIN tblmatkul m ON m.nama_mk = j.matakuliah
+                 WHERE m.kode_mk = ? AND j.kelas = ?
+                 LIMIT 1"
+            );
+            foreach ($selected_mk as $kode_mk) {
+                if (!is_string($kode_mk) || $kode_mk === '') {
+                    $course_valid = false;
+                    break;
+                }
 
-        $success = 0;
-        foreach ($selected_mk as $kode_mk) {
-            // Cek duplikat dalam KRS yang sama (bukan lintas semester)
-            $stmt_dup = mysqli_prepare($koneksi, "SELECT * FROM tblkrsdetail WHERE id_krs = ? AND kode_mk = ?");
-            mysqli_stmt_bind_param($stmt_dup, 'is', $id_krs, $kode_mk);
-            mysqli_stmt_execute($stmt_dup);
-            if (mysqli_num_rows(mysqli_stmt_get_result($stmt_dup)) > 0) continue;
+                $course_exists->bind_param('ss', $kode_mk, $semester);
+                $course_exists->execute();
+                if (!$course_exists->get_result()->fetch_assoc()) {
+                    $course_valid = false;
+                    break;
+                }
 
-            $stmt_detail = mysqli_prepare($koneksi, "INSERT INTO tblkrsdetail (id_krs, nim, kode_mk) VALUES (?, ?, ?)");
-            mysqli_stmt_bind_param($stmt_detail, 'iss', $id_krs, $nim, $kode_mk);
-            if (mysqli_stmt_execute($stmt_detail)) $success++;
-        }
+                $offering_exists->bind_param('ss', $kode_mk, $jadwal['kelas']);
+                $offering_exists->execute();
+                if (!$offering_exists->get_result()->fetch_assoc()) {
+                    $course_valid = false;
+                    break;
+                }
+            }
 
-        if ($success > 0) {
-            echo "<script>alert('$success mata kuliah berhasil ditambahkan ke KRS!'); window.location='krs.php';</script>";
-            exit;
-        } else {
-            $error = "Semua mata kuliah sudah pernah diambil atau gagal disimpan.";
+            if (!$course_valid) {
+                $error = "Ada mata kuliah yang tidak tersedia pada kelas yang dipilih.";
+            } else {
+                try {
+                    $koneksi->begin_transaction();
+                    $stmt_check = $koneksi->prepare(
+                        "SELECT id_krs FROM tblkrs WHERE nim = ? AND semester = ? AND tahun_ajaran = ? LIMIT 1"
+                    );
+                    $stmt_check->bind_param('sss', $nim, $semester, $tahun_ajaran);
+                    $stmt_check->execute();
+                    $existing = $stmt_check->get_result()->fetch_assoc();
+
+                    if ($existing) {
+                        $id_krs = (int) $existing['id_krs'];
+                        $stmt_update = $koneksi->prepare(
+                            "UPDATE tblkrs SET nidn = ?, id_jadwal = ? WHERE id_krs = ? AND nim = ?"
+                        );
+                        $stmt_update->bind_param('siis', $nidn, $id_jadwal_int, $id_krs, $nim);
+                        $stmt_update->execute();
+                    } else {
+                        $stmt_krs = $koneksi->prepare(
+                            "INSERT INTO tblkrs (nim, semester, tahun_ajaran, nidn, id_jadwal) VALUES (?, ?, ?, ?, ?)"
+                        );
+                        $stmt_krs->bind_param('ssssi', $nim, $semester, $tahun_ajaran, $nidn, $id_jadwal_int);
+                        $stmt_krs->execute();
+                        $id_krs = (int) $koneksi->insert_id;
+                    }
+
+                    $stmt_dup = $koneksi->prepare(
+                        "SELECT id_krsdetail FROM tblkrsdetail WHERE id_krs = ? AND kode_mk = ? LIMIT 1"
+                    );
+                    $stmt_detail = $koneksi->prepare(
+                        "INSERT INTO tblkrsdetail (id_krs, nim, kode_mk) VALUES (?, ?, ?)"
+                    );
+                    $success = 0;
+                    foreach ($selected_mk as $kode_mk) {
+                        $stmt_dup->bind_param('is', $id_krs, $kode_mk);
+                        $stmt_dup->execute();
+                        if ($stmt_dup->get_result()->fetch_assoc()) {
+                            continue;
+                        }
+
+                        $stmt_detail->bind_param('iss', $id_krs, $nim, $kode_mk);
+                        $stmt_detail->execute();
+                        $success++;
+                    }
+                    $koneksi->commit();
+
+                    if ($success > 0) {
+                        header('Location: krs.php?saved=1', true, 303);
+                        exit;
+                    }
+                    $error = "Semua mata kuliah tersebut sudah ada di KRS ini.";
+                } catch (mysqli_sql_exception $exception) {
+                    $koneksi->rollback();
+                    error_log('Gagal menyimpan KRS mahasiswa: ' . $exception->getMessage());
+                    $error = "KRS gagal disimpan. Silakan coba lagi.";
+                }
+            }
         }
     }
 }
@@ -114,6 +208,7 @@ include '../includes/topbar.php';
   </div>
 
   <form method="POST" id="formKRS">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">Semester KRS</label>
@@ -328,7 +423,10 @@ include '../includes/topbar.php';
 </style>
 
 <script>
-  const MATKUL_PER_SEMESTER = <?= json_encode($matkul_per_semester, JSON_PRETTY_PRINT) ?>;
+  const MATKUL_PER_SEMESTER = <?= json_encode(
+      $matkul_per_semester,
+      JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR
+  ) ?>;
   let selectedMK = []; // {kode_mk, nama_mk, sks, semester}
 
   function renderKatalog(semester) {
@@ -349,15 +447,25 @@ include '../includes/topbar.php';
       const isSelected = selectedMK.some(m => m.kode_mk === mk.kode_mk);
       const card = document.createElement('div');
       card.className = 'krs-mk-card' + (isSelected ? ' selected' : '');
-      card.innerHTML = `
-        <div class="krs-mk-card-top">
-          <span class="krs-mk-code">${mk.kode_mk}</span>
-          <span class="krs-mk-sks">${mk.sks} SKS</span>
-        </div>
-        <div class="krs-mk-name">${mk.nama_mk}</div>
-        <button type="button" class="krs-mk-btn">
-          <i class="fas fa-${isSelected ? 'check-circle' : 'plus'}"></i> ${isSelected ? 'Terdaftar di KRS' : 'Tambahkan'}
-        </button>`;
+      const top = document.createElement('div');
+      top.className = 'krs-mk-card-top';
+      const code = document.createElement('span');
+      code.className = 'krs-mk-code';
+      code.textContent = mk.kode_mk;
+      const credits = document.createElement('span');
+      credits.className = 'krs-mk-sks';
+      credits.textContent = `${mk.sks} SKS`;
+      top.append(code, credits);
+
+      const name = document.createElement('div');
+      name.className = 'krs-mk-name';
+      name.textContent = mk.nama_mk;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'krs-mk-btn';
+      button.textContent = isSelected ? 'Terdaftar di KRS' : 'Tambahkan';
+      card.append(top, name, button);
       card.addEventListener('click', () => toggleMK({ ...mk, semester }));
       grid.appendChild(card);
     });
@@ -390,16 +498,31 @@ include '../includes/topbar.php';
     selectedMK.forEach(mk => {
       totalSKS += parseInt(mk.sks);
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><span class="badge-app green">${mk.kode_mk}</span></td>
-        <td>${mk.nama_mk}</td>
-        <td style="text-align:center">${mk.semester}</td>
-        <td style="text-align:center"><strong>${mk.sks}</strong></td>
-        <td>
-          <button type="button" class="btn-app btn-sm-app danger" onclick="hapusMK('${mk.kode_mk}')">
-            <i class="fas fa-times"></i> Hapus
-          </button>
-        </td>`;
+      const codeCell = document.createElement('td');
+      const codeBadge = document.createElement('span');
+      codeBadge.className = 'badge-app green';
+      codeBadge.textContent = mk.kode_mk;
+      codeCell.appendChild(codeBadge);
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = mk.nama_mk;
+      const semesterCell = document.createElement('td');
+      semesterCell.style.textAlign = 'center';
+      semesterCell.textContent = mk.semester;
+      const creditsCell = document.createElement('td');
+      creditsCell.style.textAlign = 'center';
+      const credits = document.createElement('strong');
+      credits.textContent = mk.sks;
+      creditsCell.appendChild(credits);
+
+      const actionCell = document.createElement('td');
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn-app btn-sm-app danger';
+      removeButton.textContent = 'Hapus';
+      removeButton.addEventListener('click', () => hapusMK(mk.kode_mk));
+      actionCell.appendChild(removeButton);
+      tr.append(codeCell, nameCell, semesterCell, creditsCell, actionCell);
       tbody.appendChild(tr);
 
       const input = document.createElement('input');

@@ -52,10 +52,11 @@ include '../includes/topbar.php';
               <a href="krsdetailEdit.php?id_krsdetail=<?= urlencode($datakrs['id_krsdetail']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="krsdetaildelete.php?id_krsdetail=<?= urlencode($datakrs['id_krsdetail']); ?>" class="btn-app btn-sm-app danger"
-                 onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </a>
+              <form method="post" action="krsdetaildelete.php" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id_krsdetail" value="<?= (int) $datakrs['id_krsdetail'] ?>">
+                <button type="submit" class="btn-app btn-sm-app danger"><i class="fas fa-trash-alt"></i> Hapus</button>
+              </form>
             </td>
           </tr>
         <?php endwhile; ?>

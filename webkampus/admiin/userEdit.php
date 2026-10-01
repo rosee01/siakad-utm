@@ -9,7 +9,8 @@ include '../koneksi.php';
 $pesan      = '';
 $pesan_type = '';
 
-$id_get = mysqli_real_escape_string($koneksi, $_GET['id_user'] ?? '');
+$id_param = $_GET['id_user'] ?? '';
+$id_get = is_string($id_param) ? trim($id_param) : '';
 if ($id_get === '') { header("Location: user.php"); exit; }
 
 $stmt = $koneksi->prepare("SELECT * FROM user WHERE id_user = ?");
@@ -20,12 +21,51 @@ if ($res->num_rows === 0) { header("Location: user.php"); exit; }
 $dataedit = $res->fetch_assoc();
 
 if (isset($_POST["simpan"])) {
+    foreach (["username", "password", "role", "ref_id", "status", "last_login"] as $field) {
+        if (!isset($_POST[$field]) || !is_string($_POST[$field])) {
+            http_response_code(400);
+            exit("Data user tidak valid.");
+        }
+    }
+    if (
+        !in_array($_POST["role"], ["admin", "dosen", "mahasiswa"], true)
+        || !in_array($_POST["status"], ["aktif", "nonaktif"], true)
+        || $_POST["username"] === ""
+        || ($_POST["password"] !== "" && (strlen($_POST["password"]) < 8 || strlen($_POST["password"]) > 4096))
+        || strlen($_POST["username"]) > 100
+        || strlen($_POST["ref_id"]) > 30
+    ) {
+        http_response_code(400);
+        exit("Data user tidak valid.");
+    }
+
     $username   = $_POST["username"];
     $password   = $_POST["password"];
     $role       = $_POST["role"];
     $ref_id     = $_POST["ref_id"];
     $status     = $_POST["status"];
-    $last_login = $_POST["last_login"];
+    $last_login_input = $_POST["last_login"];
+    $last_login = null;
+    if ($last_login_input !== "") {
+        $parsed_last_login = DateTime::createFromFormat('Y-m-d\TH:i', $last_login_input);
+        if (!$parsed_last_login || $parsed_last_login->format('Y-m-d\TH:i') !== $last_login_input) {
+            http_response_code(400);
+            exit("Format waktu login terakhir tidak valid.");
+        }
+        $last_login = $parsed_last_login->format('Y-m-d H:i:s');
+    }
+
+    if ($role === "dosen" || $role === "mahasiswa") {
+        $table = $role === "dosen" ? "tbldosen" : "tblmhs2";
+        $column = $role === "dosen" ? "nidn" : "nim";
+        $stmt_ref = $koneksi->prepare("SELECT 1 FROM {$table} WHERE {$column} = ? LIMIT 1");
+        $stmt_ref->bind_param("s", $ref_id);
+        $stmt_ref->execute();
+        if (!$stmt_ref->get_result()->fetch_row()) {
+            http_response_code(400);
+            exit("ID referensi tidak sesuai dengan role yang dipilih.");
+        }
+    }
 
     if (!empty($password)) {
         // ✅ Hash bcrypt untuk password baru
@@ -83,6 +123,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">ID User</label>

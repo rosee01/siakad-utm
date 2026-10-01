@@ -6,20 +6,25 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 }
 include '../koneksi.php';
 
-$kode_mk = mysqli_real_escape_string($koneksi, $_GET['kode_mk'] ?? '');
+$kode_mk = $_POST['kode_mk'] ?? '';
 
-if ($kode_mk !== '') {
-    $query  = "DELETE FROM tblmatkul WHERE kode_mk='$kode_mk'";
-    $result = mysqli_query($koneksi, $query);
-    
-    if ($result) {
-        // Pakai session flash message (lebih clean daripada alert)
-        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Data mata kuliah berhasil dihapus.'];
-    } else {
-        $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Data gagal dihapus. Mungkin masih digunakan di tabel lain.'];
-    }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Metode tidak diizinkan.');
 }
 
-header("Location: matkul.php");
+if (is_string($kode_mk) && $kode_mk !== '') {
+    $stmt = $koneksi->prepare("DELETE FROM tblmatkul WHERE kode_mk = ?");
+    $stmt->bind_param("s", $kode_mk);
+    $result = $stmt->execute();
+} else {
+    $result = false;
+}
+
+$_SESSION['flash'] = [
+    'type' => $result ? 'success' : 'error',
+    'message' => $result ? 'Data mata kuliah berhasil dihapus.' : 'Data gagal dihapus. Mungkin masih digunakan di tabel lain.',
+];
+header("Location: matkul.php", true, 303);
 exit;
 ?>

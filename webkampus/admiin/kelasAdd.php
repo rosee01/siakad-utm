@@ -14,9 +14,11 @@ if (isset($_POST["simpan"])) {
     $nama_kelas = mysqli_real_escape_string($koneksi, trim($_POST["nama_kelas"]));
     $kode_prodi = mysqli_real_escape_string($koneksi, trim($_POST["kode_prodi"]));
 
-    $query  = "INSERT INTO tbl_kelas (kode_kelas, nama_kelas, kode_prodi) 
-               VALUES ('$kode_kelas', '$nama_kelas', '$kode_prodi')";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = $koneksi->prepare(
+        "INSERT INTO tbl_kelas (kode_kelas, nama_kelas, kode_prodi) VALUES (?, ?, ?)"
+    );
+    $stmt->bind_param("sss", $kode_kelas, $nama_kelas, $kode_prodi);
+    $result = $stmt->execute();
 
     if ($result) {
         header("Location: kelas.php");
@@ -58,6 +60,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="mb-3">
       <label class="form-label">Kode Kelas</label>
       <input type="text" name="kode_kelas" class="form-control" required />

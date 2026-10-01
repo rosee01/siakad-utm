@@ -10,7 +10,10 @@ $pesan      = '';
 $pesan_type = '';
 
 // Ambil NIM dari URL
-$nim_get = mysqli_real_escape_string($koneksi, $_GET['nim'] ?? '');
+$nim_get = $_GET['nim'] ?? '';
+if (!is_string($nim_get)) {
+    $nim_get = '';
+}
 
 if ($nim_get === '') {
     header("Location: mahasiswa.php");
@@ -18,8 +21,10 @@ if ($nim_get === '') {
 }
 
 // Ambil data mahasiswa
-$queryEdit  = "SELECT * FROM tblmhs2 WHERE nim='$nim_get'";
-$resultEdit = mysqli_query($koneksi, $queryEdit);
+$stmt_edit = $koneksi->prepare("SELECT * FROM tblmhs2 WHERE nim = ?");
+$stmt_edit->bind_param("s", $nim_get);
+$stmt_edit->execute();
+$resultEdit = $stmt_edit->get_result();
 
 if (!$resultEdit || mysqli_num_rows($resultEdit) === 0) {
     header("Location: mahasiswa.php");
@@ -37,10 +42,11 @@ if (isset($_POST["ubah"])) {
     $jns_kelamin = mysqli_real_escape_string($koneksi, $_POST["jns_kelamin"]);
     $alamat      = mysqli_real_escape_string($koneksi, trim($_POST["alamat"]));
 
-    $query = "UPDATE tblmhs2 SET nama_mhs='$nama_mhs', prodi='$prodi', semester='$semester', jns_kelamin='$jns_kelamin',
-              alamat='$alamat' WHERE nim='$nim'";
-
-    $result = mysqli_query($koneksi, $query);
+    $stmt_update = $koneksi->prepare(
+        "UPDATE tblmhs2 SET nama_mhs=?, prodi=?, semester=?, jns_kelamin=?, alamat=? WHERE nim=?"
+    );
+    $stmt_update->bind_param("ssssss", $nama_mhs, $prodi, $semester, $jns_kelamin, $alamat, $nim_get);
+    $result = $stmt_update->execute();
 
     if ($result) {
         $pesan      = "Data mahasiswa berhasil diperbarui.";
@@ -88,6 +94,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">NIM</label>

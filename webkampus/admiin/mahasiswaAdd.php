@@ -17,9 +17,11 @@ if (isset($_POST["simpan"])) {
     $jns_kelamin = mysqli_real_escape_string($koneksi, $_POST["jns_kelamin"]);
     $alamat      = mysqli_real_escape_string($koneksi, trim($_POST["alamat"]));
 
-    $query  = "INSERT INTO tblmhs2 (nim, nama_mhs, prodi, semester, jns_kelamin, alamat) 
-               VALUES ('$nim', '$nama_mhs', '$prodi', '$semester', '$jns_kelamin', '$alamat')";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = $koneksi->prepare(
+        "INSERT INTO tblmhs2 (nim, nama_mhs, prodi, semester, jns_kelamin, alamat) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param("ssssss", $nim, $nama_mhs, $prodi, $semester, $jns_kelamin, $alamat);
+    $result = $stmt->execute();
 
     if ($result) {
         header("Location: mahasiswa.php");
@@ -58,6 +60,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">NIM</label>

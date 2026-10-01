@@ -6,6 +6,12 @@ include "koneksi.php";
 
 // Jika sudah login, langsung arahkan sesuai role
 if (isset($_SESSION['username'])) {
+    if (!in_array($_SESSION['role'] ?? null, ['admin', 'dosen', 'mahasiswa'], true)) {
+        session_unset();
+        session_destroy();
+        header("Location: login.php");
+        exit;
+    }
     switch ($_SESSION['role']) {
         case 'admin':     header("Location: admiin/dashboard.php"); break;
         case 'dosen':     header("Location: dosen/dashboard.php"); break;
@@ -17,8 +23,9 @@ if (isset($_SESSION['username'])) {
 $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
+    $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
+    $username = is_string($username) ? trim($username) : '';
 
     // ✅ Prepared statement — aman dari SQL injection
     $stmt = $koneksi->prepare("SELECT id_user, username, password, role, ref_id, status FROM user WHERE username = ? LIMIT 1");
@@ -26,7 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
 
-    if ($user && $user['status'] === 'aktif') {
+    if (
+        is_string($password)
+        && $user
+        && $user['status'] === 'aktif'
+        && in_array($user['role'], ['admin', 'dosen', 'mahasiswa'], true)
+    ) {
         $stored   = $user['password'];
         $login_ok = false;
 
@@ -48,12 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!password_verify($password, $stored)) {
                 $newHash = password_hash($password, PASSWORD_DEFAULT);
                 $up = $koneksi->prepare("UPDATE user SET password = ? WHERE id_user = ?");
-                $up->bind_param("si", $newHash, $user['id_user']);
+                $up->bind_param("ss", $newHash, $user['id_user']);
                 $up->execute();
             }
 
             // ✅ Cegah session fixation
             session_regenerate_id(true);
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
             $_SESSION['username'] = $user['username'];
             $_SESSION['role']     = $user['role'];
@@ -63,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Catat waktu login terakhir
             $now = date('Y-m-d H:i:s');
             $up2 = $koneksi->prepare("UPDATE user SET last_login = ? WHERE id_user = ?");
-            $up2->bind_param("si", $now, $user['id_user']);
+            $up2->bind_param("ss", $now, $user['id_user']);
             $up2->execute();
 
             switch ($user['role']) {
@@ -114,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </p>
       </div>
 
-      <img class="campus-photo" src="../assets/img/utm.png" alt="Gedung Universitas Teknologi Mataram">
+      <img class="campus-photo" src="../assets/img/utm.png?v=2" alt="Ilustrasi gedung kampus Universitas Teknologi Mataram, dibuat dengan AI">
       <div class="photo-fade" aria-hidden="true"></div>
 
       <div class="features">
@@ -173,6 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="post" autocomplete="off">
+    <?= csrf_field() ?>
           <div class="form-group">
             <label for="username">Username / NIM</label>
             <div class="input-wrap">

@@ -50,10 +50,11 @@ include '../includes/topbar.php';
               <a href="kelasEdit.php?kode_kelas=<?= urlencode($data['kode_kelas']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="kelasdelete.php?kode_kelas=<?= urlencode($data['kode_kelas']); ?>" class="btn-app btn-sm-app danger"
-                 onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </a>
+              <form method="post" action="kelasdelete.php" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="kode_kelas" value="<?= htmlspecialchars($data['kode_kelas'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                <button type="submit" class="btn-app btn-sm-app danger"><i class="fas fa-trash-alt"></i> Hapus</button>
+              </form>
             </td>
           </tr>
         <?php endwhile; ?>

@@ -23,9 +23,24 @@ if (isset($_POST["simpan"])) {
 
     // ✅ Perbaikan: tambahkan kolom `semester` ke INSERT (di kode asli field ada tapi tidak disimpan)
     // ✅ Perbaikan: `$hari` sekarang pakai quote di query
-    $query = "INSERT INTO tblmatkul (kode_mk, nama_mk, sks, semester, id_prodi, nama_dosen, hari, jam_mulai, jam_selesai, ruang) 
-              VALUES ('$kode_mk', '$nama_mk', '$sks', '$semester', '$id_prodi', '$nama_dosen', '$hari', '$jam_mulai', '$jam_selesai', '$ruang')";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = $koneksi->prepare(
+        "INSERT INTO tblmatkul (kode_mk, nama_mk, sks, semester, id_prodi, nama_dosen, hari, jam_mulai, jam_selesai, ruang)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param(
+        "ssiissssss",
+        $kode_mk,
+        $nama_mk,
+        $sks,
+        $semester,
+        $id_prodi,
+        $nama_dosen,
+        $hari,
+        $jam_mulai,
+        $jam_selesai,
+        $ruang
+    );
+    $result = $stmt->execute();
 
     if ($result) {
         header("Location: matkul.php");
@@ -71,6 +86,7 @@ include '../includes/topbar.php';
   <?php endif; ?>
 
   <form method="POST" autocomplete="off">
+    <?= csrf_field() ?>
     <!-- Baris 1: Kode MK, Nama MK -->
     <div class="row">
       <div class="col-md-4 mb-3">
