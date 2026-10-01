@@ -9,15 +9,7 @@ print-ready official academic documents (KHS & KRS).
 
 ## 📸 Screenshots
 
-| Login | Admin Dashboard |
-|:---:|:---:|
-| ![Login](screenshots/login.png) | ![Admin](screenshots/admin-dashboard.png) |
-
-| Dosen Dashboard | Cetak KHS (1 halaman) |
-|:---:|:---:|
-| ![Dosen](screenshots/dosen-dashboard.png) | ![KHS](screenshots/cetak-khs.png) |
-
-> *(Tambahkan folder `screenshots/` lalu isi dengan gambar sesuai nama di atas)*
+Screenshots will be added after all visible personal and academic records have been replaced with fabricated, anonymized examples.
 
 ---
 
@@ -63,19 +55,17 @@ print-ready official academic documents (KHS & KRS).
 
 1. Install [XAMPP](https://www.apachefriends.org/) and start Apache + MySQL.
 2. Copy this project into `htdocs/portofolio/siakad-portofolio1/`.
-3. Import `db_kampus.sql` via phpMyAdmin.
-4. Check database credentials in `webkampus/koneksi.php` if needed.
+3. Create a local database named `db_kampus` and prepare its schema and synthetic demo records locally.
+4. Configure local database credentials in `webkampus/koneksi.php`.
 5. Open: `http://localhost/portofolio/siakad-portofolio1/webkampus/login.php`
+
+> A database dump is intentionally not included in this repository because it contained student-like personal and academic records. The application will not run until you create a local database using fabricated test data. Never use production personal data in a public repository.
 
 ---
 
 ## 🔑 Demo Accounts
 
-| Role      | Username | Password |
-|-----------|----------|----------|
-| Admin     | `admin`     | *(isi sendiri)* |
-| Dosen     | *(isi)*     | *(isi)* |
-| Mahasiswa | `23TI061`   | *(isi)* |
+No demo accounts or passwords are published. Create local test accounts with fabricated data before signing in; do not reuse production credentials.
 
 ---
 
