@@ -108,7 +108,10 @@ css/
 - Prepared statements on authentication & critical flows
 - `htmlspecialchars()` output escaping across all pages
 - Students can only view/edit **their own** data (server-side NIM validation)
+- Lecturer grade entry is restricted to the lecturer's own schedules and enrolled students
+- The legacy `page` parameter is allowlisted and HTML-attribute escaped
 - bcrypt password hashing with automatic legacy upgrade
+- This educational project is not ready for production use with real academic data; CSRF protection and prepared-statement coverage still need broader review
 
 ---
 

@@ -9,6 +9,14 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role'])) {
 
 $role = $_SESSION['role'];
 $username = $_SESSION['username'];
+$page = $_GET['page'] ?? 'home';
+if (!is_string($page) || !in_array($page, ['home', 'mahasiswa', 'dosen', 'jadwal', 'prodi', 'matakuliah', 'krs', 'kelas', 'ruangan'], true)) {
+    $page = 'home';
+}
+$search = $_GET['search'] ?? '';
+if (!is_string($search)) {
+    $search = '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -173,17 +181,14 @@ $username = $_SESSION['username'];
         <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
     </div>
     <form class="search-form" method="GET" action="" style="margin: 0 auto; display: flex; justify-content: center; align-items: center; gap: 10px;">
-        <input type="hidden" name="page" value="<?php echo $_GET['page'] ?? 'home'; ?>">
-        <input type="text" name="search" placeholder="Cari..." value="<?php echo htmlspecialchars($_GET['search'] ?? '') ?>" style="width: 220px;">
+        <input type="hidden" name="page" value="<?= htmlspecialchars($page, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <input type="text" name="search" placeholder="Cari..." value="<?= htmlspecialchars($search, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" style="width: 220px;">
         <button type="submit"><i class="fa fa-search"></i></button>
     </form>
 </div>
 
 <div class="content">
     <?php
-    $page = $_GET['page'] ?? 'home';
-    $search = $_GET['search'] ?? '';
-
     switch ($page) {
         case 'mahasiswa': include "mahasiswa.php"; break;
         case 'dosen': include "dosen.php"; break;

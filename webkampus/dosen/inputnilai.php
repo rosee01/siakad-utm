@@ -30,69 +30,115 @@ $jadwal->bind_param("s", $nama_dosen);
 $jadwal->execute();
 $jadwal_list = $jadwal->get_result()->fetch_all(MYSQLI_ASSOC);
 
-$selected_jadwal = isset($_GET['jadwal']) ? $_GET['jadwal'] : '';
+$selected_jadwal = $_POST['jadwal'] ?? $_GET['jadwal'] ?? '';
+if (!is_scalar($selected_jadwal) || !ctype_digit((string) $selected_jadwal) || (int) $selected_jadwal < 1) {
+    $selected_jadwal = '';
+} else {
+    $selected_jadwal = (int) $selected_jadwal;
+}
+
 $mahasiswa = [];
 $selected_info = null;
+$pesan = '';
+$pesan_type = '';
 
 if ($selected_jadwal) {
-    // Info jadwal terpilih
     foreach ($jadwal_list as $j) {
-        if ($j['id_jadwal'] == $selected_jadwal) {
+        if ((int) $j['id_jadwal'] === $selected_jadwal) {
             $selected_info = $j;
             break;
         }
     }
-    
-    $sql = "SELECT m.nim, m.nama_mhs, m.prodi, n.nilai
-            FROM tblkrs k
-            JOIN tblmhs2 m ON k.nim = m.nim
-            LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = k.id_jadwal
-            WHERE k.id_jadwal = ?
-            ORDER BY m.nama_mhs";
-    $stmt = $koneksi->prepare($sql);
-    $stmt->bind_param("s", $selected_jadwal);
-    $stmt->execute();
-    $mahasiswa = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    if ($selected_info) {
+        $sql = "SELECT m.nim, m.nama_mhs, m.prodi, n.nilai
+                FROM tblkrs k
+                JOIN tblmhs2 m ON k.nim = m.nim
+                LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = k.id_jadwal
+                WHERE k.id_jadwal = ?
+                ORDER BY m.nama_mhs";
+        $stmt = $koneksi->prepare($sql);
+        $stmt->bind_param("i", $selected_jadwal);
+        $stmt->execute();
+        $mahasiswa = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
 }
 
-$pesan = '';
-$pesan_type = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_nilai'])) {
+    if (!$selected_info) {
+        $pesan = 'Jadwal tidak valid atau bukan jadwal mengajar Anda.';
+        $pesan_type = 'error';
+    } elseif (!isset($_POST['nilai']) || !is_array($_POST['nilai'])) {
+        $pesan = 'Data nilai tidak valid.';
+        $pesan_type = 'error';
+    } else {
+        $enrolled_nims = array_fill_keys(array_column($mahasiswa, 'nim'), true);
+        $nilai_valid = [];
+        $data_valid = true;
 
-if (isset($_POST['simpan_nilai']) && $selected_jadwal) {
-    $success = 0;
-    foreach ($_POST['nilai'] as $nim => $nilai) {
-        if ($nilai === '' || $nilai === null) continue;
-        $nilai = intval($nilai);
-        
-        $cek = $koneksi->prepare("SELECT * FROM tblnilai WHERE nim = ? AND id_jadwal = ?");
-        $cek->bind_param("ss", $nim, $selected_jadwal);
-        $cek->execute();
-        if ($cek->get_result()->fetch_assoc()) {
-            $update = $koneksi->prepare("UPDATE tblnilai SET nilai = ? WHERE nim = ? AND id_jadwal = ?");
-            $update->bind_param("iss", $nilai, $nim, $selected_jadwal);
-            $update->execute();
-        } else {
-            $insert = $koneksi->prepare("INSERT INTO tblnilai (nim, id_jadwal, nilai) VALUES (?, ?, ?)");
-            $insert->bind_param("ssi", $nim, $selected_jadwal, $nilai);
-            $insert->execute();
+        foreach ($_POST['nilai'] as $nim => $nilai) {
+            $nim = (string) $nim;
+            if (!isset($enrolled_nims[$nim])) {
+                $data_valid = false;
+                break;
+            }
+
+            if ($nilai === '') {
+                continue;
+            }
+
+            if (!is_string($nilai) || !preg_match('/^(?:0|[1-9][0-9]{0,2})$/D', $nilai) || (int) $nilai > 100) {
+                $data_valid = false;
+                break;
+            }
+
+            $nilai_valid[$nim] = (int) $nilai;
         }
-        $success++;
+
+        if (!$data_valid) {
+            $pesan = 'Nilai ditolak. Pastikan mahasiswa terdaftar pada jadwal ini dan nilai berada di antara 0 dan 100.';
+            $pesan_type = 'error';
+        } else {
+            try {
+                $koneksi->begin_transaction();
+                $success = 0;
+
+                foreach ($nilai_valid as $nim => $nilai) {
+                    $cek = $koneksi->prepare("SELECT id_nilai FROM tblnilai WHERE nim = ? AND id_jadwal = ? LIMIT 1");
+                    $cek->bind_param("si", $nim, $selected_jadwal);
+                    $cek->execute();
+
+                    if ($cek->get_result()->fetch_assoc()) {
+                        $update = $koneksi->prepare("UPDATE tblnilai SET nilai = ? WHERE nim = ? AND id_jadwal = ?");
+                        $update->bind_param("isi", $nilai, $nim, $selected_jadwal);
+                        $update->execute();
+                    } else {
+                        $insert = $koneksi->prepare("INSERT INTO tblnilai (nim, id_jadwal, nilai) VALUES (?, ?, ?)");
+                        $insert->bind_param("sii", $nim, $selected_jadwal, $nilai);
+                        $insert->execute();
+                    }
+
+                    $success++;
+                }
+
+                $koneksi->commit();
+                $pesan = "$success nilai mahasiswa berhasil disimpan.";
+                $pesan_type = 'success';
+            } catch (mysqli_sql_exception $exception) {
+                $koneksi->rollback();
+                error_log('Gagal menyimpan nilai dosen: ' . $exception->getMessage());
+                $pesan = 'Nilai gagal disimpan. Silakan coba lagi atau hubungi administrator.';
+                $pesan_type = 'error';
+            }
+
+            if ($pesan_type === 'success') {
+                $stmt = $koneksi->prepare($sql);
+                $stmt->bind_param("i", $selected_jadwal);
+                $stmt->execute();
+                $mahasiswa = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            }
+        }
     }
-    
-    $pesan = "$success nilai mahasiswa berhasil disimpan.";
-    $pesan_type = 'success';
-    
-    // Reload data mahasiswa
-    $sql = "SELECT m.nim, m.nama_mhs, m.prodi, n.nilai
-            FROM tblkrs k
-            JOIN tblmhs2 m ON k.nim = m.nim
-            LEFT JOIN tblnilai n ON n.nim = m.nim AND n.id_jadwal = k.id_jadwal
-            WHERE k.id_jadwal = ?
-            ORDER BY m.nama_mhs";
-    $stmt = $koneksi->prepare($sql);
-    $stmt->bind_param("s", $selected_jadwal);
-    $stmt->execute();
-    $mahasiswa = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
 $currentPage = 'nilai';
@@ -126,7 +172,7 @@ include '../includes/topbar.php';
         <option value="">-- Pilih Jadwal --</option>
         <?php foreach ($jadwal_list as $j): ?>
           <option value="<?= htmlspecialchars($j['id_jadwal']) ?>" 
-                  <?= $selected_jadwal == $j['id_jadwal'] ? 'selected' : '' ?>>
+                  <?= $selected_jadwal === (int) $j['id_jadwal'] ? 'selected' : '' ?>>
             <?= htmlspecialchars($j['hari']) ?>, <?= htmlspecialchars($j['jam_mulai']) ?>-<?= htmlspecialchars($j['jam_selesai']) ?>
             — <?= htmlspecialchars($j['nama_mk']) ?> (Kelas <?= htmlspecialchars($j['kelas']) ?>)
           </option>
@@ -141,8 +187,10 @@ include '../includes/topbar.php';
 
 <?php if ($pesan): ?>
   <div style="padding:14px 18px; border-radius:12px; margin-bottom:20px; font-size:14px;
-              background:#f0fdf4; border:1px solid #bbf7d0; color:#166534;">
-    <i class="fas fa-check-circle"></i> <?= htmlspecialchars($pesan) ?>
+              background:<?= $pesan_type === 'success' ? '#f0fdf4' : '#fef2f2' ?>;
+              border:1px solid <?= $pesan_type === 'success' ? '#bbf7d0' : '#fecaca' ?>;
+              color:<?= $pesan_type === 'success' ? '#166534' : '#b91c1c' ?>;">
+    <i class="fas <?= $pesan_type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' ?>"></i> <?= htmlspecialchars($pesan) ?>
   </div>
 <?php endif; ?>
 
@@ -171,6 +219,7 @@ include '../includes/topbar.php';
       </div>
     <?php else: ?>
       <form method="post">
+        <input type="hidden" name="jadwal" value="<?= htmlspecialchars((string) $selected_jadwal, ENT_QUOTES, 'UTF-8') ?>">
         <div class="table-responsive">
           <table class="table-app">
             <thead>

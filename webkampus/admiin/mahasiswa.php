@@ -4,6 +4,13 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
     exit;
 }
+if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+$flash = $_SESSION['flash'] ?? null;
+unset($_SESSION['flash']);
+
 include '../koneksi.php';
 
 /* ---------- DATA TABEL ---------- */
@@ -18,6 +25,11 @@ include '../includes/topbar.php';
 ?>
 
 <div class="data-card">
+  <?php if (is_array($flash) && isset($flash['message'], $flash['type'])): ?>
+    <div style="padding:12px 16px; border-radius:10px; background:<?= $flash['type'] === 'success' ? '#f0fdf4' : '#fef2f2' ?>; border:1px solid <?= $flash['type'] === 'success' ? '#bbf7d0' : '#fecaca' ?>; color:<?= $flash['type'] === 'success' ? '#166534' : '#b91c1c' ?>; margin-bottom:18px;">
+      <?= htmlspecialchars($flash['message'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+    </div>
+  <?php endif; ?>
   <div class="card-head">
     <h3><i class="fas fa-user-graduate me-2" style="color:var(--primary)"></i>Data Mahasiswa</h3>
     <a href="mahasiswaAdd.php" class="btn-app">
@@ -56,10 +68,13 @@ include '../includes/topbar.php';
               <a href="mahasiswaEdit.php?nim=<?= urlencode($m['nim']); ?>" class="btn-app btn-sm-app outline">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="mahasiswadelete.php?nim=<?= urlencode($m['nim']); ?>" class="btn-app btn-sm-app danger"
-                 onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </a>
+              <form method="post" action="mahasiswadelete.php" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                <input type="hidden" name="nim" value="<?= htmlspecialchars($m['nim'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+                <button type="submit" class="btn-app btn-sm-app danger">
+                  <i class="fas fa-trash-alt"></i> Hapus
+                </button>
+              </form>
             </td>
           </tr>
         <?php endwhile; ?>
